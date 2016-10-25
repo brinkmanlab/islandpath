@@ -17,15 +17,17 @@
     
 =head1 AUTHORS
 
-		Claire Bertelli and
+	Claire Bertelli
+	Email: claire.bertelli@sfu.ca
+    and
     Matthew Laird
+    Email: lairdm@sfu.ca
     Brinkman Laboratory
     Simon Fraser University
-		Email: claire.bertelli@sfu.ca
 
 =head1 LAST MAINTAINED
 
-    Apr 26, 2016
+    Oct 24, 2016
 
 =cut
 
@@ -42,10 +44,11 @@ use File::Spec;
 
 use Dimob::genomicislands;
 use Dimob::Mobgene;
+use Dimob::Config;
 use GenomeUtils;
 
 
-my $cfg; my $logger; #my $cfg_file;
+my $cfg; my $cfg_file; my $logger;
 
 my $module_name = 'Dimob';
 
@@ -53,16 +56,24 @@ sub BUILD {
     my $self = shift;
     my $args = shift;
 
+    # Initialize the configuration file
+    # CHECKING INITIALIZATION
+    Dimob::Config->initialize({cfg_file => $args->{cfg_file}});
     $cfg = Dimob::Config->config;
     $cfg_file = File::Spec->rel2abs(Dimob::Config->config_file);
 
+    # Initialize the logfile with the current date
     $logger = Log::Log4perl->get_logger;
+    $self->log_rotate();
+    $logger->trace("IslandPath-DIMOB initialized");
 
     die "Error, work dir not specified:  $args->{workdir}"
 			unless( -d $args->{workdir} );
     $self->{workdir} = $args->{workdir};
 
     $self->{MIN_GI_SIZE} = $args->{MIN_GI_SIZE};
+
+# REMOVE THE FOLLOWING LINES
 
     # Do we need to use extended ids because
     # there could be duplicate gis. We DON'T want
@@ -138,6 +149,7 @@ sub run_dimob {
     	return ();
     }
 
+    $logger->debug("Looking for mobility genes using hmmer");
     # We need a temporary file to hold the hmmer output
     my $hmmer_outfile = $self->_make_tempfile();
     push @tmpfiles, $hmmer_outfile;
@@ -167,13 +179,13 @@ sub run_dimob {
     }
 
     my $mobgene_obj = Dimob::Mobgene->new($mod_args);
-    # my $mobgenes = $mobgene_obj->parse_hmmer('/home/lairdm/islandviewer/workdir/dimob//blasttmpoHyYLgBj5w', $cfg->{hmmer_evalue} );
     my $mobgenes = $mobgene_obj->parse_hmmer( $hmmer_outfile, $cfg->{hmmer_evalue} );
     foreach(keys %$mobgenes){
     	$mob_list->{$_}=1;   
     }
 
     #get a list of mobility genes from ptt file based on keyword match
+    $logger->debug("Retrieving mobility genes from ptt file");
     my $mobgene_ptt = $mobgene_obj->parse_ptt("$filename.ptt");
 
     foreach(keys %$mobgene_ptt){
@@ -182,6 +194,7 @@ sub run_dimob {
 
     #calculate the dinuc bias for each gene cluster of 6 genes
     #input is a fasta file of ORF nucleotide sequences
+    $logger->debug("Calculating dinucleotide bias");
     my $dinuc_results = cal_dinuc("$filename.ffn");
     my @dinuc_values;
     foreach my $val (@$dinuc_results) {
@@ -202,6 +215,7 @@ sub run_dimob {
     #check the dinuc islands against the mobility gene list
     #any dinuc islands containing >=1 mobility gene are classified as
     #dimob islands
+    $logger->debug("Looking for regions with dinuc bias and mobility genes");
     my $dimob_islands = dimob_islands( $dinuc_islands, $mob_list );
 
     my @gis;
@@ -217,13 +231,15 @@ sub run_dimob {
 			#my $start = $_->[0]{start};
 			#my $end = $_->[-1]{end};		 
 			#print "$start\t$end\n";    
-		}
+    }
 		
-		# And cleanup after ourself
-		if($cfg->{clean_tmpfiles}) {
-			$logger->trace("Cleaning up temp files for Dimob");
-			$self->_remove_tmpfiles(@tmpfiles);
-		}
+    # And cleanup after ourself
+    $logger->debug("Cleaning temporary files");
+
+    if($cfg->{clean_tmpfiles}) {
+        $logger->trace("Cleaning up temp files for Dimob");
+        $self->_remove_tmpfiles(@tmpfiles);
+    }
 
     return @gis;
 }
@@ -254,3 +270,27 @@ sub _remove_tmpfiles {
 }
 
 1;
+
+sub log_rotate {
+    my $self = shift;
+
+    # Build the logfile name we want to use
+    my($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
+    my $datestr = "$year$mon$mday-$hour$min$sec";
+    my $logfile = File::Spec->catpath(undef, $cfg->{logdir}, "dimob.$datestr.log");
+
+    my $app = Log::Log4perl->appender_by_name("errorlog");
+
+    unless($app) {
+        $logger->warn("Logging doesn't seem to be defined, you might not even see this");
+        return;
+    }
+
+    if($app->filename eq $logfile) {
+        $logger->info("Asked to rotate the logfile, nothing to do, keeping " . $app->filename);
+    } else {
+        $logger->info("Rotating log file, current file: " . $app->filename . ", switching to: " . $logfile);
+        $app->file_switch($logfile);
+        $logger->info("Initializing logfile, rotated.");
+    }
+}

@@ -1,3 +1,30 @@
+=head1 DESCRIPTION
+
+    A reuse of Matthew's original code for IslandViewer
+    to use a config file the main variables needed for the pipeline
+
+=head1 SYNOPSIS
+
+    use Dimob::genomicislands;
+
+	see Dimob.pm
+
+=head1 AUTHOR
+
+	Claire Bertelli
+	Email: claire.bertelli@sfu.ca
+    and
+    Matthew Laird
+    Email: lairdm@sfu.ca
+    Brinkman Laboratory
+    Simon Fraser University
+
+=head1 LAST MAINTAINED
+
+    Oct 24, 2016
+
+=cut
+
 package Dimob::Config;
 use MooseX::Singleton;
 
@@ -27,6 +54,7 @@ sub initialize {
     die "Error, unable to read config file $cfg_file"
 	unless(-f $cfg_file && -r $cfg_file);
 
+    # Read the section [main] of the config file
     my $config = new Config::Simple($cfg_file)->param(-block => 'main');
 
     $self->_set_config($config);
@@ -87,19 +115,7 @@ sub shorten_directory {
 
     $path =~ s/\/\//\//g;
 
-    if($cfg->{tmp_genomes} && 
-       $path =~ /$cfg->{tmp_genomes}/) {
-	$path =~ s/$cfg->{tmp_genomes}/{{tmp_genomes}}/;
-    } elsif($cfg->{custom_genomes} && 
-       $path =~ /$cfg->{custom_genomes}/) {
-	$path =~ s/$cfg->{custom_genomes}/{{custom_genomes}}/;
-    } elsif($cfg->{workdir} && 
-       $path =~ /$cfg->{workdir}/) {
-	$path =~ s/$cfg->{workdir}/{{workdir}}/;
-    } elsif($cfg->{analysis_directory} && 
-       $path =~ /$cfg->{analysis_directory}/) {
-	$path =~ s/$cfg->{analysis_directory}/{{analysis_directory}}/;
-    } elsif($cfg->{rootdir} &&
+    if($cfg->{rootdir} &&
 	    $path =~ /$cfg->{rootdir}/) {
 	$path =~ s/$cfg->{rootdir}/{{rootdir}}/;
     }

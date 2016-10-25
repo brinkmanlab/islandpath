@@ -1,5 +1,32 @@
-package Islandviewer::Dimob::genomicislands;
-#loosely associated subroutines for generating dinuc and dimob islands
+=head1 DESCRIPTION
+
+    A repackaging of Will's original Dimob software
+    loosely associated subroutines used by Dimob.pm for generating dinuc and dimob islands
+
+=head1 SYNOPSIS
+
+    use Dimob::genomicislands;
+
+	see Dimob.pm
+
+=head1 AUTHOR
+
+	Claire Bertelli
+	Email: claire.bertelli@sfu.ca
+    and
+    Matthew Laird
+    Email: lairdm@sfu.ca
+    Brinkman Laboratory
+    Simon Fraser University
+
+=head1 LAST MAINTAINED
+
+    Oct 24, 2016
+
+=cut
+
+
+package Dimob::genomicislands;
 
 use strict;
 use warnings;

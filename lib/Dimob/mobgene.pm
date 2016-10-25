@@ -1,6 +1,6 @@
 =head1 NAME
 
-    Islandviewer::Dimob::Mobgene
+    Dimob::Mobgene
 
 =head1 DESCRIPTION
 
@@ -17,16 +17,17 @@
 
 =head1 AUTHOR
 
+	Claire Bertelli
+	Email: claire.bertelli@sfu.ca
+    and
     Matthew Laird
+    Email: lairdm@sfu.ca
     Brinkman Laboratory
     Simon Fraser University
-    Email: lairdm@sfu.ca
 
 =head1 LAST MAINTAINED
 
-    Apr 21, 2016
-    Claire Bertelli
-		Email: claire.bertelli@sfu.ca
+    Oct 24, 2016
 
 =cut
 
@@ -47,7 +48,7 @@ sub BUILD {
     my $self = shift;
     my $args = shift;
 
-    $cfg = Islandviewer::Config->config;
+    $cfg = Dimob::Config->config;
 
     $logger = Log::Log4perl->get_logger;
 

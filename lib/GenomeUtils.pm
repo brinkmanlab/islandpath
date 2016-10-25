@@ -4,7 +4,7 @@
 
 =head1 DESCRIPTION
 
-    Object to load, convert and store custom genomes in to
+    Object to load, convert and store custom genomes into
     the internal formats needed by IslandPath
 
 =head1 SYNOPSIS
@@ -28,7 +28,7 @@
 
 =head1 LAST MAINTAINED
 
-    Oct 30, 2013
+    Oct 24, 2016
 
 =cut
 
@@ -44,14 +44,9 @@ use File::Basename;
 use Data::Dumper;
 use File::Temp qw/ :mktemp /;
 use File::Spec;
+use Dimob::Config;
 
 use Bio::Perl;
-
-#use Islandviewer::Constants qw(:DEFAULT $STATUS_MAP $REV_STATUS_MAP $ATYPE_MAP);
-#use Islandviewer::CustomGenome;
-#use Islandviewer::MicrobeDBGenome;
-#use MicrobedbV2::Singleton;
-
 use Bio::SeqIO;
 use Bio::Seq;
 
@@ -61,7 +56,7 @@ sub BUILD {
     my $self = shift;
     my $args = shift;
 
-   $cfg = Dimob::Config->config;
+    $cfg = Dimob::Config->config;
 
     $logger = Log::Log4perl->get_logger;
 
@@ -257,7 +252,7 @@ sub load_fna {
 sub read_and_convert {
     my $self = shift;
     my $filename = shift;
-    my $genome_name = (@_ ? shift : 'custom_genome');
+	my $genome_name = (@_ ? shift : 'custom_genome');
 
     #separate extension from filename
     $filename =~ s/\/\//\//g;
@@ -279,81 +274,53 @@ sub read_and_convert {
 
     if ( $extension =~ /embl/ ) {
 
-			$in = Bio::SeqIO->new(
-					-file   => $filename,
-					-format => 'EMBL'
-					);
-			$logger->info("The genome sequence in $filename has been read.");
-		} elsif ( ($extension =~ /gbk/) || ($extension =~ /gb/) ) {
-			# Special case, our general purpose code likes .gbk...
-			if($extension =~ /gb/) {
-					move($filename, "$file.gbk");
-					$filename = "$file.gbk";
-			}
-
-			$in = Bio::SeqIO->new(
-					-file   => $filename,
-					-format => 'GENBANK'
-					);
-			$logger->info("The genome sequence in $filename has been read.");
-		} else {
-			$logger->logdie("Can't figure out if file is genbank (.gbk) or embl (.embl)");
+		$in = Bio::SeqIO->new(
+				-file   => $filename,
+				-format => 'EMBL'
+				);
+		$logger->info("The genome sequence in $filename has been read.");
+		$logger->info("Now generating required file formats (faa, ffn and ptt)");
+	} elsif ( ($extension =~ /gbk/) || ($extension =~ /gb/) || ($extension =~ /gbff/)) {
+		# Special case, our general purpose code likes .gbk...
+		if( ($extension =~ /gb/) || ($extension =~ /gbff/)) {
+				move($filename, "$file.gbk");
+				$filename = "$file.gbk";
 		}
 
-  while ( my $seq = $in->next_seq() ) {
-		my $out;
-
-		if ( $extension =~ /embl/ ) {
-				my $outfile = ($formats->{gbk} ? '/dev/null' : $file . '.gbk');
-				$out = Bio::SeqIO->new(
-			-file   => ">" . $outfile,
-			-format => 'GENBANK'
-			);
-		} elsif ( ($extension =~ /gbk/) || ($extension =~ /gb/) ) {
-							# This whole section needs a lot of cleanup, but for now
-							# we really don't NEED embl files except for Sigi and the Sigi
-							# module now generates a temporary embl file if needed. If we get
-							# embl files we convert them to genbank anyways. This makes the
-							# microbedb stuff easier, don't need write permission there.
-							my $outfile = '/dev/null';
-	#	    my $outfile = ($formats->{embl} ? '/dev/null' : $file . '.embl');
-				$out = Bio::SeqIO->new(
-			-file   => ">" . $outfile,
-			-format => 'EMBL'
-			);
-		} else {
-				$logger->logdie("Can't figure out if file is genbank (.gbk) or embl (.embl)");
-		}
-
-		my $outfile = ($formats->{faa} ? '/dev/null' : $file . '.faa');
-		my $faa_out = Bio::SeqIO->new(
-				-file   => ">" . $outfile,
-				-format => 'FASTA'
+		$in = Bio::SeqIO->new(
+				-file   => $filename,
+				-format => 'GENBANK'
 				);
-		$outfile = ($formats->{ffn} ? '/dev/null' : $file . '.ffn');
-		my $ffn_out = Bio::SeqIO->new(
-				-file   => ">" . $outfile,
-				-format => 'FASTA'
-				);
-		#$outfile = ($formats->{fna} ? '/dev/null' : $file . '.fna');
-		#my $fna_out = Bio::SeqIO->new(
-		#		-file   => ">" . $outfile,
-		#		-format => 'FASTA'
-		#		);
+		$logger->info("The genome sequence in $filename has been read.");
+		$logger->info("Now generating required file formats (faa, ffn and ptt)");
 
-		$outfile = ($formats->{ptt} ? '/dev/null' : $file . '.ptt');
-		open( my $PTT_OUT, '>', $outfile );
+	} else {
+		$logger->logdie("Can't figure out if file is genbank (.gbk) or embl (.embl)");
+	}
+
+	my $outfile = ($formats->{faa} ? '/dev/null' : $file . '.faa');
+	my $faa_out = Bio::SeqIO->new(
+		-file   => ">" . $outfile,
+		-format => 'FASTA'
+	);
+	$outfile = ($formats->{ffn} ? '/dev/null' : $file . '.ffn');
+	my $ffn_out = Bio::SeqIO->new(
+		-file   => ">" . $outfile,
+		-format => 'FASTA'
+	);
+	#$outfile = ($formats->{fna} ? '/dev/null' : $file . '.fna');
+	#my $fna_out = Bio::SeqIO->new(
+	#		-file   => ">" . $outfile,
+	#		-format => 'FASTA'
+	#		);
+	$outfile = ($formats->{ptt} ? '/dev/null' : $file . '.ptt');
+	open( my $PTT_OUT, '>', $outfile );
+
+	while ( my $seq = $in->next_seq() ) {
+		# open all files
 
 		my $total_length = $seq->length();
-		my $total_seq    = $seq->seq();
-
-		my $success = 0;
-
-		#Create gbk or embl file
-		$success = $out->write_seq($seq);
-		if ($success == 0) {
-				$logger->error(".gbk or .embl file is not generated successfully.");
-		}
+#		my $total_seq    = $seq->seq();
 
 		#Create fna file
 		#$success = $fna_out->write_seq($seq);
@@ -388,21 +355,20 @@ sub read_and_convert {
 
 		#Step through each protein
 		foreach my $feat (@cds) {
-				$count++;
+			$count++;
 
-				#Get the general features
-				my $start  = $feat->start;
-				my $end    = $feat->end;
-				my $strand = $feat->strand;
-				my $length = $feat->length;
+			#Get the general features
+			my $start  = $feat->start;
+			my $end    = $feat->end;
+			my $strand = $feat->strand;
+			my $length = $feat->length;
 
-				if ($length <= 2) {
-					throw Bio::Root::Exception("Something's wrong with one of the protein sequences! CDS info: start=$start end=$end strand=$strand");
-				}
+			if ($length <= 2) {
+				throw Bio::Root::Exception("Something's wrong with one of the protein sequences! CDS info: start=$start end=$end strand=$strand");
+			}
 
-				#Get more features associated with gene (not all of these will neccesarily exist)
-				my ( $product, $protein_accnum, $gene_name, $locus_tag ) =
-			( '', '', '', '' );
+			#Get more features associated with gene (not all of these will necessarily exist)
+			my ( $product, $protein_accnum, $gene_name, $locus_tag ) = ( '', '', '', '' );
 				($product) = $feat->get_tag_values('product')
 			if $feat->has_tag('product');
 				($protein_accnum) = $feat->get_tag_values('protein_id')
@@ -433,6 +399,7 @@ sub read_and_convert {
 			}
 			$ffn_seq->id($desc);
 			$ffn_seq->desc($product);
+			my $success = 0;
 			$success = $ffn_out->write_seq($ffn_seq);
 			if ($success == 0) {
 				$logger->error(".ffn file is not generated successfully.");
@@ -471,38 +438,7 @@ sub read_and_convert {
 			);
 				print $PTT_OUT join( "\t", @col ), "\n";
 
-				#load annotation into microbedb
-	#	    insert_record(
-	#		'gene',
-	#		{
-	#		    version_id     => 0,
-	#		    rpv_id         => $rpv_id,
-	#		    gpv_id         => $gpv_id,
-	#		    protein_accnum => $protein_accnum,
-	#		    pid            => $gi,
-	#		    gene_start     => $start,
-	#		    gene_end       => $end,
-	#		    gene_length    => $length,
-	#		    gene_strand    => $strand_expand,
-	#		    gene_name      => $gene_name,
-	#		    locus_tag      => $locus_tag,
-	#		    gene_product   => $product,
-	#		    gene_seq       => $ffn_seq->seq(),
-	#		    protein_seq    => $faa_seq->seq(),
-	#		}
-	#		);
-		}    #end of foreach
-
-	#	update_record(
-	#	    'replicon',
-	#	    { rpv_id => $rpv_id },
-	#	    {
-	#		cds_num    => $num_proteins,
-	#		rep_size   => $total_length,
-	#		rep_seq    => $total_seq,
-	#		file_types => '.gbk .fna .faa .ffn .ptt .embl',
-	#	    }
-	#	    );
+			}    #end of foreach
 
 		# Save the details of the file we just loaded
 		$self->{name} = $genome_name;
@@ -518,9 +454,9 @@ sub read_and_convert {
 		close($PTT_OUT);
   }    #end of while
     
-}    #end of gbk_or_embl_to_other_formats
+}    #end of read_and_convert
 
-
+# REMOVE THIS FUNCTIONS?
 # We really need to go back to square one and manage the files and
 # formats better. Or improve the analysis pieces so they share
 # formats... ugh. But for now, a tool to convert a genbank to embl
@@ -532,7 +468,7 @@ sub convert_file {
     my $filename = shift;
     my $outfile = shift;
 
-    #seperate extension from filename
+    #separate extension from filename
     $filename =~ s/\/\//\//g;
     my ( $file, $extension ) = $filename =~ /(.+)\.(\w+)/;
 

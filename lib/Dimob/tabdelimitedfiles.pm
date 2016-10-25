@@ -1,5 +1,29 @@
-# Repackage Will's code, its tried and true, why spend time rewriting it
-# and introducing bugs...
+=head1 DESCRIPTION
+
+    A repackaging of Will's original code - its tried and true, why spend time rewriting it
+    loosely associated subroutines used by Dimob.pm to deal with tabdelimited files
+
+=head1 SYNOPSIS
+
+    use Dimob::genomicislands;
+
+	see Dimob.pm
+
+=head1 AUTHOR
+
+	Claire Bertelli
+	Email: claire.bertelli@sfu.ca
+    and
+    Matthew Laird
+    Email: lairdm@sfu.ca
+    Brinkman Laboratory
+    Simon Fraser University
+
+=head1 LAST MAINTAINED
+
+    Oct 24, 2016
+
+=cut
 
 package Dimob::tabdelimitedfiles;
 
