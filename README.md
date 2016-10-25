@@ -15,7 +15,7 @@ Alternatively, you can also clone the latest code from github:
 
     git clone https://github.com/brinkmanlab/islandpath
 
-## Dependencies
+**_Dependencies_**
 
 1. Though IslandPath-DIMOB should work with any OS, it has only been tested with linux. 
 
