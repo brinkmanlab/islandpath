@@ -59,6 +59,18 @@ MAIN: {
         exit;
     }
 
+    # if it does not exist already, create a tmp directory to store intermediate results, copy the input file to the tmp
+    #$logger->info("Creating temp directory with needed files");
+    my $tmp_path = "tmp_dimob";
+    if (! -d $tmp_path)
+    {
+        my $dirs = eval { mkpath($tmp_path) };
+        die "Failed to create $tmp_path: $@\n" unless $dirs;
+    }
+    copy($inputfile,$tmp_path) or die "Failed to copy $inputfile: $!\n";
+    my($filename, $dirs, $suffix) = fileparse($inputfile, qr/\.[^.]*/);
+    $inputfile = File::Spec->catfile($tmp_path,$filename);
+
     # create a dimob object
     my $dimob_obj = Dimob->new({cfg_file => $cfname, workdir => './tmp_dimob',
             MIN_GI_SIZE => 2000}
@@ -74,17 +86,6 @@ MAIN: {
     }
 
 
-    # if it does not exist already, create a tmp directory to store intermediate results, copy the input file to the tmp
-    $logger->info("Creating temp directory with needed files");
-    my $tmp_path = "tmp_dimob";
-    if (! -d $tmp_path)
-    {
-        my $dirs = eval { mkpath($tmp_path) };
-        die "Failed to create $tmp_path: $@\n" unless $dirs;
-    }
-    copy($inputfile,$tmp_path) or die "Failed to copy $inputfile: $!\n";
-    my($filename, $dirs, $suffix) = fileparse($inputfile, qr/\.[^.]*/);
-    $inputfile = File::Spec->catfile($tmp_path,$filename);
 
     ######
     # From an embl or genbank file regenerate a ptt, ffn, and faa file needed by dimob.pm
