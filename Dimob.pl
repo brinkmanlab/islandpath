@@ -80,7 +80,7 @@ MAIN: {
     if (! -d $tmp_path)
     {
         my $dirs = eval { mkpath($tmp_path) };
-        die "Failed to create $path: $@\n" unless $dirs;
+        die "Failed to create $tmp_path: $@\n" unless $dirs;
     }
     copy($inputfile,$tmp_path) or die "Failed to copy $inputfile: $!\n";
     my($filename, $dirs, $suffix) = fileparse($inputfile, qr/\.[^.]*/);
