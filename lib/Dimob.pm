@@ -43,7 +43,7 @@ use File::Spec;
 
 
 use Dimob::genomicislands;
-use Dimob::Mobgene;
+use Dimob::mobgene;
 use Dimob::Config;
 use GenomeUtils;
 
