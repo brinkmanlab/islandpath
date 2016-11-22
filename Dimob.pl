@@ -70,7 +70,6 @@ MAIN: {
     copy($inputfile,$tmp_path) or die "Failed to copy $inputfile: $!\n";
     my($filename, $dirs, $suffix) = fileparse($inputfile, qr/\.[^.]*/);
     $inputfile = File::Spec->catfile($tmp_path,$filename) . $suffix;
-    print($inputfile);
 
     # create a dimob object
     my $dimob_obj = Dimob->new({cfg_file => $cfname, workdir => './tmp_dimob',

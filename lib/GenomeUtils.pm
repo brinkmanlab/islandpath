@@ -258,9 +258,30 @@ sub read_and_convert {
     $filename =~ s/\/\//\//g;
     my ( $file, $extension ) = $filename =~ /(.+)\.(\w+)/;
 
-    $logger->debug("From filename $filename got $file, $extension");
+	unless($extension) {
+		$logger->info("Didn't receive file type for $filename");
 
-    # We're going to check what files we have, then only
+		# Check if an embl or genbank file exists for this genome
+		if(-f $filename . '.gbk' &&
+			-s $filename . '.gbk') {
+			$logger->info("We seem to have a genbank file, preferred format");
+			$extension = 'gbk';
+			$file = $filename;
+			$filename .= '.gbk';
+		} elsif(-f $filename . '.embl' &&
+			-s $filename . '.embl') {
+			$logger->info("We seem to have a embl file");
+			$extension = 'embl';
+			$file = $filename;
+			$filename .= '.embl';
+		} else {
+			$logger->logdie("Can't find file format for $filename, this is very bad");
+		}
+	}
+
+	$logger->debug("From filename $filename got $file, $extension");
+
+	# We're going to check what files we have, then only
     # generate the ones we need.  Because this code is
     # so nicely compact and to avoid duplication, we're
     # just going to trick the code so if a file exists
