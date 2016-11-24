@@ -27,7 +27,7 @@
 
 =head1 LAST MAINTAINED
 
-    Oct 24, 2016
+    Nov 24, 2016
 
 =cut
 
@@ -137,6 +137,7 @@ sub parse_ptt {
 	       || $product =~ /phage/i
 	       || $product =~ /transposon/i
 	       || $product =~ /transposable element/i
+		   || $product =~ /excisionase/i
 	       )
 	{
 	    $mobgenes{$pid} = $product;

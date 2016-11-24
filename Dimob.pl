@@ -1,21 +1,28 @@
 #!/usr/bin/env perl
-=pod
+=head1 NAME
 
     IslandPath-DIMOB
 
+=head1 DESCRIPTION
+
     Script to run IslandPath-DIMOB genomic island prediction on a given genome
 
-    Usage:
+=head1 SYNOPSIS
+
     ./Dimob.pl <genome.gbk> <outputfile.txt>
     Example:
     ./Dimob.pl example/NC_003210.gbk NC_003210_GIs.txt
 
-    Claire Bertelli
+=head1 AUTHORS
+
+	Claire Bertelli
+	Email: claire.bertelli@sfu.ca
     Brinkman Laboratory
     Simon Fraser University
- 	Email: claire.bertelli@sfu.ca
 
-    Last maintained: October 24th, 2016
+=head1 LAST MAINTAINED
+
+    November 21th, 2016
 
 =cut
 

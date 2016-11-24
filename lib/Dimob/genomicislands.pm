@@ -550,8 +550,8 @@ sub defline2gi {
 			if ( $orf1 =~ /\|:(\d+)-(\d+)\)/ ) {
 				$orf_start = $1;
 				$orf_end   = $2;
-					my $coordinate = "$orf_start..$orf_end";
-			 $pid        = $ptt_table_hashref->{$coordinate}->{'PID'};
+				my $coordinate = "$orf_start..$orf_end";
+			 	$pid = $ptt_table_hashref->{$coordinate}->{'PID'};
 				if($extended_ids) {
 #				    print "Using extended\n";
 				    $pid .= "_$orf_start" . '..' . $orf_end;

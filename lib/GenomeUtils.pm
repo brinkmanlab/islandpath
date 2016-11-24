@@ -28,7 +28,9 @@
 
 =head1 LAST MAINTAINED
 
-    Oct 24, 2016
+    Nov 21, 2016
+    Claire Bertelli
+    Email: claire.bertelli@sfu.ca
 
 =cut
 
