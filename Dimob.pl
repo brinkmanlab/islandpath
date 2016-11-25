@@ -30,21 +30,23 @@
 use strict;
 use warnings FATAL => 'all';
 use Getopt::Long;
-
-use lib './lib';
-use GenomeUtils;
-use Dimob;
-
 use Data::Dumper;
 use File::Copy;
 use File::Basename;
 use File::Spec;
 use File::Path;
 
+# use local Dimob libraries
+use FindBin qw($Bin);
+use lib "$Bin/lib";
+use GenomeUtils;
+use Dimob;
+
+
 MAIN: {
 
     # config files
-    my $cfname = 'Dimob.config';
+    my $cfname = '$Bin/Dimob.config';
     my $logger;
 #    my $logger_cfg = 'logger.conf';
 
@@ -68,6 +70,7 @@ MAIN: {
 
     # if it does not exist already, create a tmp directory to store intermediate results, copy the input file to the tmp
     #$logger->info("Creating temp directory with needed files");
+    ### TO DO replace this temp folder by using the function in Dimob.pm
     my $tmp_path = "tmp_dimob";
     if (! -d $tmp_path)
     {
@@ -78,9 +81,13 @@ MAIN: {
     my($filename, $dirs, $suffix) = fileparse($inputfile, qr/\.[^.]*/);
     $inputfile = File::Spec->catfile($tmp_path,$filename);
 
-    # create a dimob object
-    my $dimob_obj = Dimob->new({cfg_file => $cfname, workdir => './tmp_dimob',
-            MIN_GI_SIZE => 2000}
+    # create a dimob object and then read the config file
+    my $dimob_obj = Dimob->new(
+        {cfg_file => $cfname,
+            workdir => './tmp_dimob',
+            MIN_GI_SIZE => 2000,
+            #extended_ids => 1
+        }
     );
     my $cfg = Dimob::Config->config;
 
@@ -133,7 +140,7 @@ MAIN: {
         $logger->error("Can't remove $inputfile: $!");
     }
     unless(rmdir $tmp_path) {
-        $logger->error("Can't remove $inputfile: $!");
+        $logger->error("Can't remove $tmp_path: $!");
     }
 
 }
