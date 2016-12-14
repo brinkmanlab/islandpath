@@ -485,7 +485,7 @@ sub dinuc_islands {
 		}
 		#elsif (( $dinuc_abovecut[$i] ) == ( $dinuc_abovecut[ $i - 1 ]+1 ) ) {
 			#push @{ $islands[$island_index] }, $ORFs_dinuc_array->[ $dinuc_abovecut[$i] ];
-    #}
+    	#}
 		else {
 			$island_index++;
 		}
