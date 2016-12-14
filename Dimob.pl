@@ -86,7 +86,7 @@ MAIN: {
         {cfg_file => $cfname,
             workdir => './tmp_dimob',
             MIN_GI_SIZE => 2000,
-            #extended_ids => 1
+            extended_ids => 1
         }
     );
     my $cfg = Dimob::Config->config;
