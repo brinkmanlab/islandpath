@@ -62,9 +62,9 @@ sub BUILD {
 
     $logger = Log::Log4perl->get_logger;
 
-    die "Error, work dir not specified: $args->{workdir}"
-				unless( -d $args->{workdir} );
-    $self->{workdir} = $args->{workdir};
+#    die "Error, work dir not specified: $args->{workdir}"
+#				unless( -d $args->{workdir} );
+#    $self->{workdir} = $args->{workdir};
 
 }
 

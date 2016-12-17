@@ -22,7 +22,7 @@
 
 =head1 LAST MAINTAINED
 
-    November 21th, 2016
+    December 16th, 2016
 
 =cut
 
@@ -35,6 +35,9 @@ use File::Copy;
 use File::Basename;
 use File::Spec;
 use File::Path;
+use Log::Log4perl qw(get_logger :nowarn);
+use File::Temp qw/ :mktemp /;
+use Cwd;
 
 # use local Dimob libraries
 use FindBin qw($Bin);
@@ -46,14 +49,14 @@ use Dimob;
 MAIN: {
 
     # config files
-    my $cfname = '$Bin/Dimob.config';
+    my $cwd = getcwd;
+    my $cfname = "$Bin/Dimob.config";
     my $logger;
-#    my $logger_cfg = 'logger.conf';
+    #my $logger_conf = "$Bin/logger.conf";
 
     # usage help
     my $usage = "Usage:\n./Dimob.pl <genome.gbk> <outputfile.txt>\nExample:\n./Dimob.pl example/NC_003210.gbk NC_003210_GIs.txt\n";
 
-#   my $arguments = GetOptions()
     my ($inputfile, $outputfile) = @ARGV;
 
     # Check that input file and output file are specified or die and print help message
@@ -62,37 +65,31 @@ MAIN: {
         exit;
     }
 
-    # Check that input file is readable
+    # Transform relative path to absolute path and 
+    # check that input file is readable
+    $inputfile = File::Spec -> rel2abs($inputfile);
     unless( -f $inputfile && -r $inputfile ) {
         print "Error: $inputfile is not readable";
         exit;
     }
 
-    # if it does not exist already, create a tmp directory to store intermediate results, copy the input file to the tmp
-    #$logger->info("Creating temp directory with needed files");
-    ### TO DO replace this temp folder by using the function in Dimob.pm
-    my $tmp_path = "tmp_dimob";
-    if (! -d $tmp_path)
-    {
-        my $dirs = eval { mkpath($tmp_path) };
-        die "Failed to create $tmp_path: $@\n" unless $dirs;
-    }
-    copy($inputfile,$tmp_path) or die "Failed to copy $inputfile: $!\n";
-    my($filename, $dirs, $suffix) = fileparse($inputfile, qr/\.[^.]*/);
-    $inputfile = File::Spec->catfile($tmp_path,$filename);
-
-    # create a dimob object and then read the config file
+    # Create a dimob object
     my $dimob_obj = Dimob->new(
         {cfg_file => $cfname,
-            workdir => './tmp_dimob',
+            bindir => $Bin,
+            workdir => $cwd,
             MIN_GI_SIZE => 2000,
             extended_ids => 1
         }
     );
+    
+    # Recover the config from file, initialized during creation dimob_obj
     my $cfg = Dimob::Config->config;
-
+    $cfg->{logger_conf} = "$Bin/" . $cfg->{logger_conf};
+    $cfg->{hmmer_db} = "$Bin/" . $cfg->{hmmer_db};
 
     # Check that the logger exists and initializes it
+    print $cfg->{logger_conf};
     if($cfg->{logger_conf} && ( -r $cfg->{logger_conf})) {
         Log::Log4perl::init($cfg->{logger_conf});
         $logger = Log::Log4perl->get_logger;
@@ -100,14 +97,26 @@ MAIN: {
     }
 
 
+    # Create a tmp directory to store intermediate results, copy the input file to the tmp
+    $logger->info("Creating temp directory with needed files");
+    my($filename, $dirs, $suffix) = fileparse($inputfile, qr/\.[^.]*/);
+    my $tmp_path = mkdtemp($dirs . "dimob_tmpXXXXXXXXXX");
+    if (! -d $tmp_path)
+    {
+        my $dirs = eval { mkpath($tmp_path) };
+        die "Failed to create $tmp_path: $@\n" unless $dirs;
+    }
+    copy($inputfile,$tmp_path) or die "Failed to copy $inputfile: $!\n";
+    $inputfile = File::Spec->catfile($tmp_path,$filename);
+
+    # update workdir in genome_obj with the temporary directory
+    $dimob_obj -> {workdir} = $tmp_path;
 
     ######
     # From an embl or genbank file regenerate a ptt, ffn, and faa file needed by dimob.pm
 
     # create a genome object from package GenomeUtils
-    my $genome_obj = GenomeUtils->new(
-                                            {workdir => './tmp_dimob'}
-                                            );
+    my $genome_obj = GenomeUtils->new();
 
     # check the gbk/embl file format
     $genome_obj->read_and_check($genome_obj, $inputfile);
@@ -118,7 +127,7 @@ MAIN: {
     $genome_obj->read_and_convert($inputfile, $genome_name);
 
     ######
-    # Runs IslandPath-DIMOB on the genome files
+    # Runs IslandPath-DIMOB on the genome files 
 
     $logger->info("Running IslandPath-DIMOB");
     my @islands = $dimob_obj->run_dimob($inputfile);
@@ -142,5 +151,4 @@ MAIN: {
     unless(rmdir $tmp_path) {
         $logger->error("Can't remove $tmp_path: $!");
     }
-
 }

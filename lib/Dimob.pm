@@ -60,6 +60,7 @@ sub BUILD {
     # CHECKING INITIALIZATION
     Dimob::Config->initialize({cfg_file => $args->{cfg_file}});
     $cfg = Dimob::Config->config;
+    $cfg -> {rootdir} = $args -> {bindir};
     $cfg_file = File::Spec->rel2abs(Dimob::Config->config_file);
 
     # Initialize the logfile with the current date
@@ -73,13 +74,9 @@ sub BUILD {
 
     $self->{MIN_GI_SIZE} = $args->{MIN_GI_SIZE};
 
-# REMOVE THE FOLLOWING LINES
-
     # Do we need to use extended ids because
-    # there could be duplicate gis. We DON'T want
-    # to do this with NCBI automated updates since
-    # those don't have the coordinates in the faa header,
-    # but the ones we generate do.
+    # there could be duplicate gis. All the files 
+    # we generate have coordinates in the faa header
     if($args->{extended_ids}) {
 			$logger->trace("Using extended ids");
 			$self->{extended_ids} = 1;
