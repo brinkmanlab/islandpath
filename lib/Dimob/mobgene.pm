@@ -17,8 +17,8 @@
 
 =head1 AUTHOR
 
-	Claire Bertelli
-	Email: claire.bertelli@sfu.ca
+    Claire Bertelli
+    Email: claire.bertelli@sfu.ca
     and
     Matthew Laird
     Email: lairdm@sfu.ca
@@ -27,7 +27,7 @@
 
 =head1 LAST MAINTAINED
 
-    Nov 24, 2016
+    Dec 17, 2016
 
 =cut
 
@@ -73,7 +73,7 @@ sub parse_hmmer {
 
     my $search_pattern = 'gi\|(\d+)\|';
     if($self->{extended_ids}) {
-	$search_pattern = 'gi\|(\d+)\|\:c?(\d+-\d+)';
+	$search_pattern = 'gi\|(\d+)\|\:c?(\d+\.\.\d+)';
     }
 	#making sure that the file is present and not empty
 	if ( -s "$hmmer_file" ) {

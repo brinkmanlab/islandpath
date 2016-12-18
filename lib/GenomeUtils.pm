@@ -28,7 +28,7 @@
 
 =head1 LAST MAINTAINED
 
-    Nov 21, 2016
+    Dec 17, 2016
     Claire Bertelli
     Email: claire.bertelli@sfu.ca
 
@@ -411,7 +411,7 @@ sub read_and_convert {
 
 			my $strand_expand  = $strand >= 0 ? '+' : '-';
 			my $strand_expand2 = $strand >= 0 ? ''  : 'c';
-			my $desc = "\:$strand_expand2" . "$start-$end";
+			my $desc = "\:$strand_expand2" . "$start..$end";
 
 			$desc = "ref\|$ref_accnum\|gi\|$gi\|" . $desc;
 
@@ -916,7 +916,7 @@ sub split_header {
     }
 
     # See if we have a coordinate in the header
-    if($type =~ /:c?(\d+)\-(\d+)/) {
+    if($type =~ /:c?(\d+)\.\.(\d+)/) {
         $identifiers->{start} = $1;
         $identifiers->{end} = $2;
     }
