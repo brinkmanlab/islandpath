@@ -14,6 +14,7 @@ To get started, download a [release](github.com/brinkmanlab/islandpath/releases)
 Alternatively, you can also clone the latest code from github:
 
     git clone https://github.com/brinkmanlab/islandpath
+    
 
 **_Dependencies_**
 
@@ -22,12 +23,18 @@ Alternatively, you can also clone the latest code from github:
 2. Perl version 5.18.x or higher  
 The latest version of Perl can be obtained from http://www.cpan.org
 
-3. The Bioperl library version 2.1.9 or higher 
-Bioperl can be obtained from www.bioperl.org
+3. The following Perl libraries are also required:
+    - Data::Dumper
+    - Log:Log4perl
+    - Config::Simple
+    - Moose
+    - MooseX::Singleton
+    - Bio::Perl
 
 4. A working installation of HMMER3  
 HMMER can be obtained from http://hmmer.org/  
 "hmmscan" must be within your executable path.
+
 
 ## Run
 
@@ -42,6 +49,7 @@ IslandPath-DIMOB v1.0 takes as input an annotated genome as a genbank (.gbk) or 
 ## Citation
 
 [Hsiao et al 2005](http://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.0010062)
+
 
 ## Questions? Comments? Bugs?
 
@@ -65,20 +73,20 @@ IslandPick is distributed under the GNU General Public License. See also the LIC
 
 ## Versions - New features
 
-### 2016/xx/xx - IslandPath-DIMOB v1.0  
-Increased recall and precision in the prediction of genomic islands based on the presence of dinucleotide bias and mobility genes  
+### 23/12/2016 - IslandPath-DIMOB v1.0  
+Increased recall and precision in the prediction of genomic islands based on the presence of dinucleotide bias and mobility genes. Standardization of input file types, and automatic generation of the other file types required by IslandPath-DIMOB.  
 Input: gbk or embl file  
 Publication: Bertelli and Brinkman, unpublished  
 
 ### 2008 - IslandPath-DIMOB
 Improvement and assessment of IslandPath-DIMOB predictions by Morgan Langille  
+Input files: ffn, faa, ptt  
 Publication: [Langille et al., 2008](http://www.biomedcentral.com/1471-2105/9/329)
 
 ### 2005 - IslandPath-DIMOB 
 Second version developed by Will Hsiao  
-Further studies used dinucleotide sequence composition bias and the presence of mobility genes to develop a data set of GIs (IslandPath DIMOB) for multiple organisms and revealed that these genomic regions contain higher proportions of novel genes.   
+Further studies used dinucleotide sequence composition bias and the presence of mobility genes to develop a data set of GIs (IslandPath DIMOB) for multiple organisms and revealed that these genomic regions contain higher proportions of novel genes.  Input files: ffn, faa, ptt  
 Publication: [Hsiao et al., 2005](http://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.0010062)
-Input files: ffn, faa, ptt 
 
 ### 2003 - IslandPath-DINUC
 IslandPath-DINUC developed by Will Hsiao  
