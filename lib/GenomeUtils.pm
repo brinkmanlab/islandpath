@@ -21,16 +21,17 @@
 
 =head1 AUTHOR
 
+    Claire Bertelli
+    Email: claire.bertelli@sfu.ca
+    and
     Matthew Laird
+    Email: lairdm@sfu.ca
     Brinkman Laboratory
     Simon Fraser University
-    Email: lairdm@sfu.ca
 
 =head1 LAST MAINTAINED
 
     Dec 17, 2016
-    Claire Bertelli
-    Email: claire.bertelli@sfu.ca
 
 =cut
 
