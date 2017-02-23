@@ -38,7 +38,7 @@ HMMER can be obtained from http://hmmer.org/
 
 ## Run
 
-IslandPath-DIMOB v1.0 takes as input an annotated genome as a genbank (.gbk) or an embl (.embl) file.
+IslandPath-DIMOB v1.0.0 takes as input an annotated genome as a genbank (.gbk) or an embl (.embl) file.
 
     # gbk file
     ./Dimob.pl example/NC_003210.gbk NC_003210_GIs.txt
@@ -68,12 +68,12 @@ If we don't have access to a system similar to yours, you may be asked to insert
 
 ## Copyright and License
 
-IslandPick is distributed under the GNU General Public License. See also the LICENSE file included with this package.
+IslandPath-DIMOB is distributed under the GNU General Public License. See also the LICENSE file included with this package.
 
 
 ## Versions - New features
 
-### 23/12/2016 - IslandPath-DIMOB v1.0  
+### 23/12/2016 - IslandPath-DIMOB v1.0.0  
 Increased recall and precision in the prediction of genomic islands based on the presence of dinucleotide bias and mobility genes. Standardization of input file types, and automatic generation of the other file types required by IslandPath-DIMOB.  
 Input: gbk or embl file  
 Publication: Bertelli and Brinkman, unpublished  
@@ -85,7 +85,8 @@ Publication: [Langille et al., 2008](http://www.biomedcentral.com/1471-2105/9/32
 
 ### 2005 - IslandPath-DIMOB 
 Second version developed by Will Hsiao  
-Further studies used dinucleotide sequence composition bias and the presence of mobility genes to develop a data set of GIs (IslandPath DIMOB) for multiple organisms and revealed that these genomic regions contain higher proportions of novel genes.  Input files: ffn, faa, ptt  
+Further studies used dinucleotide sequence composition bias and the presence of mobility genes to develop a data set of GIs (IslandPath DIMOB) for multiple organisms and revealed that these genomic regions contain higher proportions of novel genes.  
+Input files: ffn, faa, ptt  
 Publication: [Hsiao et al., 2005](http://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.0010062)
 
 ### 2003 - IslandPath-DINUC
