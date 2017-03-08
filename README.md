@@ -9,7 +9,7 @@ The latest IslandPath-DIMOB version is integrated in [IslandViewer 4](http://www
 
 ## Install
 
-To get started, download a [release](github.com/brinkmanlab/islandpath/releases).
+To get started, download a [release](http://github.com/brinkmanlab/islandpath/releases/).
 
 Alternatively, you can also clone the latest code from github:
 
