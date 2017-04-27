@@ -15,7 +15,9 @@ Alternatively, you can also clone the latest code from github:
 
     git clone https://github.com/brinkmanlab/islandpath
     
-
+A pre-built Docker image is also available in the [brinkmanlab docker hub](https://hub.docker.com/r/brinkmanlab/islandpath/).  
+    
+  
 **_Dependencies_**
 
 1. Though IslandPath-DIMOB should work with any OS, it has only been tested with linux. 
