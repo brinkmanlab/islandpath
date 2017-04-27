@@ -48,6 +48,7 @@ IslandPath-DIMOB v1.0.0 takes as input an annotated genome as a genbank (.gbk) o
 
 ## Citation
 
+Bertelli and Brinkman, 2017, in preparation  
 [Hsiao et al 2005](http://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.0010062)
 
 
