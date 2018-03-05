@@ -99,7 +99,8 @@ MAIN: {
 
     # Create a tmp directory to store intermediate results, copy the input file to the tmp
     $logger->info("Creating temp directory with needed files");
-    my($filename, $dirs, $suffix) = fileparse($inputfile, qr/\.[^.]*/);
+    my($filename, $dirs, $suffix) = fileparse($inputfile, qr/\.[^.]+$/);
+
     my $tmp_path = mkdtemp($dirs . "dimob_tmpXXXXXXXXXX");
     if (! -d $tmp_path)
     {
@@ -118,16 +119,17 @@ MAIN: {
     # create a genome object from package GenomeUtils
     my $genome_obj = GenomeUtils->new();
 
+    $logger->info("This is the $inputfile");
     # check the gbk/embl file format
-    $genome_obj->read_and_check($genome_obj, $inputfile);
+    $genome_obj->read_and_check($genome_obj, $inputfile . $suffix);
 
     # read the gbk/embl file and convert it to all files needed
     my $genome_name = $genome_obj->{'base_filename'};
 
-    $genome_obj->read_and_convert($inputfile, $genome_name);
+    $genome_obj->read_and_convert($inputfile . $suffix, $genome_name);
 
     ######
-    # Runs IslandPath-DIMOB on the genome files 
+    # Runs IslandPath-DIMOB on the genome files
 
     $logger->info("Running IslandPath-DIMOB");
     my @islands = $dimob_obj->run_dimob($inputfile);
