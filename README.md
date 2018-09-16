@@ -52,7 +52,7 @@ IslandPath-DIMOB v1.0.0 takes as input an annotated complete genome as a genbank
 
 ## Citation
 
-[Bertelli and Brinkman, 2018](https://doi.org/10.1093/bioinformatics/bty095) 
+[Bertelli and Brinkman, 2018](https://doi.org/10.1093/bioinformatics/bty095)  
 [Hsiao et al., 2005](http://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.0010062)
 
 
