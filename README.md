@@ -9,13 +9,15 @@ The latest IslandPath-DIMOB version is integrated in [IslandViewer 4](http://www
 
 ## Install
 
-To get started, download a [release](http://github.com/brinkmanlab/islandpath/releases/).
+A pre-built Docker image is available in the [brinkmanlab docker hub](https://hub.docker.com/r/brinkmanlab/islandpath/). Using this pre-installed version of IslandPath-DIMOB ensures the software runs according to expectations.
+
+Users wishing to install locally IslandPath-DIMOB can download a [release](http://github.com/brinkmanlab/islandpath/releases/) and install required perl libraries and HMMER listed below:
 
 Alternatively, you can also clone the latest code from github:
 
     git clone https://github.com/brinkmanlab/islandpath
     
-A pre-built Docker image is also available in the [brinkmanlab docker hub](https://hub.docker.com/r/brinkmanlab/islandpath/).  
+Please note that IslandPath-DIMOB predictions should only take a couple of minutes per bacterial genome. It was recently reported that IslandPath-DIMOB was extremely slow on Mac OS X with a conda installation of perl libraries. While we investigate the reason for this issue, we recommend using the Docker image.
     
   
 **_Dependencies_**
@@ -40,7 +42,7 @@ HMMER can be obtained from http://hmmer.org/
 
 ## Run
 
-IslandPath-DIMOB v1.0.0 takes as input an annotated genome as a genbank (.gbk) or an embl (.embl) file.
+IslandPath-DIMOB v1.0.0 takes as input an annotated complete genome as a genbank (.gbk) or an embl (.embl) file.
 
     # gbk file
     ./Dimob.pl example/NC_003210.gbk NC_003210_GIs.txt
@@ -50,8 +52,8 @@ IslandPath-DIMOB v1.0.0 takes as input an annotated genome as a genbank (.gbk) o
 
 ## Citation
 
-Bertelli and Brinkman, 2017, in preparation  
-[Hsiao et al 2005](http://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.0010062)
+[Bertelli and Brinkman, 2018](https://doi.org/10.1093/bioinformatics/bty095) 
+[Hsiao et al., 2005](http://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.0010062)
 
 
 ## Questions? Comments? Bugs?
@@ -79,7 +81,7 @@ IslandPath-DIMOB is distributed under the GNU General Public License. See also t
 ### 23/12/2016 - IslandPath-DIMOB v1.0.0  
 Increased recall and precision in the prediction of genomic islands based on the presence of dinucleotide bias and mobility genes. Standardization of input file types, and automatic generation of the other file types required by IslandPath-DIMOB.  
 Input: gbk or embl file  
-Publication: Bertelli and Brinkman, unpublished  
+Publication: [Bertelli and Brinkman, 2018](https://doi.org/10.1093/bioinformatics/bty095)  
 
 ### 2008 - IslandPath-DIMOB
 Improvement and assessment of IslandPath-DIMOB predictions by Morgan Langille  
