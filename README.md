@@ -47,7 +47,7 @@ IslandPath-DIMOB v1.0.0 takes as input an annotated complete genome as a genbank
     # gbk file
     ./Dimob.pl example/NC_003210.gbk NC_003210_GIs.txt
     # embl file
-    ./Dimob.pl example/NC_003210.embl NC_003210_GIs.txt
+    ./Dimob.pl example/NC_000913.embl NC_000913_GIs.txt
 
 
 ## Citation
