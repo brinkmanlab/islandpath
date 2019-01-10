@@ -77,7 +77,7 @@ sub evaluate_parameters {
 
     my $config = $self->config;
 
-    for my $param (keys $config) {
+    for my $param (keys %{$config}) {
 	if($config->{$param} =~ /\{\{.+\}\}/) {
 	    $config->{$param} =~ s/\{\{([\w_]+)\}\}/$config->{$1}/eg;
 	    
