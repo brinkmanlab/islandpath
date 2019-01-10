@@ -40,8 +40,8 @@ use File::Temp qw/ :mktemp /;
 use Cwd;
 
 # use local Dimob libraries
-use FindBin qw($Bin);
-use lib "$Bin/lib";
+use FindBin qw($RealBin);
+use lib "$RealBin/lib";
 use GenomeUtils;
 use Dimob;
 
@@ -50,9 +50,9 @@ MAIN: {
 
     # config files
     my $cwd = getcwd;
-    my $cfname = "$Bin/Dimob.config";
+    my $cfname = "$RealBin/Dimob.config";
     my $logger;
-    #my $logger_conf = "$Bin/logger.conf";
+    #my $logger_conf = "$RealBin/logger.conf";
 
     # usage help
     my $usage = "Usage:\n./Dimob.pl <genome.gbk> <outputfile.txt>\nExample:\n./Dimob.pl example/NC_003210.gbk NC_003210_GIs.txt\n";
@@ -76,7 +76,7 @@ MAIN: {
     # Create a dimob object
     my $dimob_obj = Dimob->new(
         {cfg_file => $cfname,
-            bindir => $Bin,
+            bindir => $RealBin,
             workdir => $cwd,
             MIN_GI_SIZE => 2000,
             extended_ids => 1
@@ -85,8 +85,8 @@ MAIN: {
     
     # Recover the config from file, initialized during creation dimob_obj
     my $cfg = Dimob::Config->config;
-    $cfg->{logger_conf} = "$Bin/" . $cfg->{logger_conf};
-    $cfg->{hmmer_db} = "$Bin/" . $cfg->{hmmer_db};
+    $cfg->{logger_conf} = "$RealBin/" . $cfg->{logger_conf};
+    $cfg->{hmmer_db} = "$RealBin/" . $cfg->{hmmer_db};
 
     # Check that the logger exists and initializes it
     print $cfg->{logger_conf};
