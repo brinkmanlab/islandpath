@@ -78,8 +78,8 @@ sub evaluate_parameters {
     my $config = $self->config;
 
     for my $param (keys $config) {
-	if($config->{$param} =~ /{{.+}}/) {
-	    $config->{$param} =~ s/{{([\w_]+)}}/$config->{$1}/eg;
+	if($config->{$param} =~ /\{\{.+\}\}/) {
+	    $config->{$param} =~ s/\{\{([\w_]+)\}\}/$config->{$1}/eg;
 	    
 	}
     }
@@ -96,8 +96,8 @@ sub expand_directory {
     my $cfg = $self->config;
 
     # Expand filename
-    if($filename =~ /{{.+}}/) {
-	$filename =~ s/{{([\w_]+)}}/$cfg->{$1}/eg;
+    if($filename =~ /\{\{.+\}\}/) {
+	$filename =~ s/\{\{([\w_]+)\}\}/$cfg->{$1}/eg;
     }
 
     return $filename
