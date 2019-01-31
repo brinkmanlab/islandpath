@@ -344,7 +344,8 @@ sub read_and_convert {
 		# open all files
 
 		my $total_length = $seq->length();
-		my $seq_id = $seq->id();
+		my $seq_id = $seq->object_id();
+
 #		my $total_seq    = $seq->seq();
 
 		#Create fna file
