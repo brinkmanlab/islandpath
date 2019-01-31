@@ -344,6 +344,7 @@ sub read_and_convert {
 		# open all files
 
 		my $total_length = $seq->length();
+		my $seq_id = $seq->id();
 #		my $total_seq    = $seq->seq();
 
 		#Create fna file
@@ -412,7 +413,7 @@ sub read_and_convert {
 
 			my $strand_expand  = $strand >= 0 ? '+' : '-';
 			my $strand_expand2 = $strand >= 0 ? ''  : 'c';
-			my $desc = "\:$strand_expand2" . "$start..$end";
+			my $desc = "$seq_id\:$strand_expand2" . "$start..$end";
 
 			$desc = "ref\|$ref_accnum\|gi\|$gi\|" . $desc;
 
