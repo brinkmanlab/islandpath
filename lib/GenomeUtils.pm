@@ -378,12 +378,18 @@ sub read_and_convert {
 		my $count = 0;
 
 		#Step through each protein
-		foreach my $feat (@cds) {
+		PROT: foreach my $feat (@cds) {
 			$count++;
 
 			#Get the general features
 			my $start  = $feat->start;
 			my $end    = $feat->end;
+
+			# Ignore joined spans that break the trunc() function
+			if ($start > $end) {
+			    next PROT;
+			}
+
 			my $strand = $feat->strand;
 			my $length = $feat->length;
 
