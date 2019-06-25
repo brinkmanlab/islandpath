@@ -33,6 +33,8 @@ use warnings;
 use Carp;
 our ( @ISA, @EXPORT, @EXPORT_OK );    
 use Exporter;
+use Data::Dumper;
+
 @ISA    = qw(Exporter);
 @EXPORT =
   qw(extract_header extract_headerandbodyfh columns2hash combinehashes mergecolumns table2hash_rowfirst table2hash_columnfirst rows2hash get_row_by_key get_column_by_key nested_hash2twoDarray sort_twoDarray);
@@ -48,10 +50,8 @@ sub extract_header {
 	my @headers;
 	my $string;
 	$. = 0;
-	open my $inputfilehandle, '<', $inputfilename
-	  or croak "Couldnot open $inputfilename";
-	do { chomp( $string = <$inputfilehandle> ) }
-	  until $. == $header_linenum || eof;
+	open my $inputfilehandle, '<', $inputfilename or croak "Couldnot open $inputfilename";
+	do { chomp( $string = <$inputfilehandle> ) } until $. == $header_linenum || eof;
 	@headers = split /\t/, $string;
 	croak "header is empty\n" if ( ( scalar @headers ) == 0 );
 	return \@headers;
@@ -64,19 +64,17 @@ sub extract_headerandbodyfh {
 #return the rest of the file as a variable to the file handle. All lines before the header line
 #will be discarded.
 	my ( $inputfilename, $header_linenum ) = @_;
-	if ( $header_linenum == undef ) { $header_linenum = 1; }
+	if (!$header_linenum) { $header_linenum = 1; }
 	my @headers;
 	my $string;
 	$. = 0;
-	open my $inputfilehandle, '<', $inputfilename
-	  or croak "Couldnot open $inputfilename";
+	open my $inputfilehandle, '<', $inputfilename or croak "Could not open $inputfilename";
 	do { chomp( $string = <$inputfilehandle> ) }
-	  until $. == $header_linenum || eof;
+	until $. == $header_linenum || eof;
 	@headers = split /\t/, $string;
 	croak "header is empty\n" if ( scalar @headers == 0 );
-	return \@headers, $inputfilehandle
-	  ;    #note that at this point all lines before the header line
-	       #are stripped
+	return \@headers, $inputfilehandle;
+	#note that at this point all lines before the header line are stripped
 }
 
 sub columns2hash {
@@ -123,8 +121,7 @@ sub rows2hash {
 		my @content = split /\t/, $_;
 
 		#make sure that the key column exists
-		croak "the column number used does not exist"
-		  if ( ($key_column_num) > scalar(@content) );
+		croak "the column number used does not exist" if ( ($key_column_num) > scalar(@content) );
 		if ( exists $table_content{ $content[$key_index] } ) {
 			croak "Key: $content[$key_index] is not unique!";
 		}
@@ -162,9 +159,7 @@ sub table2hash_columnfirst {
 		my @content = split /\t/, $_;
 
 		#make sure that @content and @headers have the same number of elements
-		croak
-"the number of header elements do not match the number of content elements"
-		  if ( scalar(@headers) != scalar(@content) );
+		croak "the number of header elements do not match the number of content elements" if ( scalar(@headers) != scalar(@content) );
 		my $i = 0;
 		foreach my $header (@headers) {
 			if ( exists $table_content{$header}{ $content[$key_index] } ) {
@@ -183,13 +178,12 @@ sub table2hash_rowfirst {
 #and a user defined column as secondary keys
 #inputs: reference to an array of headers; column number starts at 1; input filehandle name
 	my @headers        = @{ shift @_ };
-	#print "@headers\n";
 	my $fd_name   = shift;
 	my @key_column_nums = @_;
+	
 	for my $key (@key_column_nums) {
-
 	    unless ( $key >= 1 && $key <= scalar(@headers) ) {
-		croak "the column number used [$key] does not exist";
+			croak "the column number used [$key] does not exist";
 	    }
 	}
 	my @key_indexes = map { $_ - 1 } @key_column_nums;
@@ -199,18 +193,18 @@ sub table2hash_rowfirst {
 		#ignore any blank lines
 		next if ( is_blank($_) );
 		chomp;
-                # Set limit to -1 so we get rows where the last column (product) is empty
+        
+        # Set limit to -1 so we get rows where the last column (product) is empty
 		my @content = split /\t/, $_, -1;
 		#make sure that @content and @headers have the same number of elements
-		croak "the number of header elements do not match the number of content elements, row: '$_'"
-		  if ( scalar(@headers) != scalar(@content) );
+		
+		croak "the number of header elements do not match the number of content elements, row: '$_'" if ( scalar(@headers) != scalar(@content) );
 		my $i = 0;
 #		my $key = $content[$key_index];
 		my $key = join('_', map { $content[$_] } @key_indexes);
 #		$key =~ s/\.\./-/g;
 		foreach my $field (@content) {
-			if ( exists $table_content{ $key }{ $headers[$i] } )
-			{
+			if ( exists $table_content{ $key }{ $headers[$i] } ) {
 				croak "Key: $key is not unique!";
 			}
 			$table_content{ $key }{ $headers[$i] } = $field;
