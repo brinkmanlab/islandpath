@@ -48,6 +48,7 @@ use Data::Dumper;
 use File::Temp qw/ :mktemp /;
 use File::Spec;
 use Dimob::Config;
+use experimental 'smartmatch';
 
 use Bio::Perl;
 use Bio::SeqIO;
