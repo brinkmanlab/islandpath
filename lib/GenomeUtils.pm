@@ -49,7 +49,6 @@ use File::Temp qw/ :mktemp /;
 use File::Spec;
 use Dimob::Config;
 use experimental 'smartmatch';
-
 use Bio::Perl;
 use Bio::SeqIO;
 use Bio::Seq;
@@ -290,6 +289,9 @@ sub read_and_convert {
     # so nicely compact and to avoid duplication, we're
     # just going to trick the code so if a file exists
     # it gets written to /dev/null
+    
+    ## and what about if we have multiple contigs?
+    
     $self->{base_filename} = $file;
     my $formats = $self->parse_formats($self->find_file_types());
 
@@ -323,12 +325,16 @@ sub read_and_convert {
 		$logger->logdie("Can't figure out if file is genbank (.gbk) or embl (.embl)");
 	}
 
-	my $outfile = ($formats->{faa} ? '/dev/null' : $file . '.faa');
+	#my $outfile = ($formats->{faa} ? '/dev/null' : $file . '.faa');
+	my $outfile = $file . '.faa';
+		
 	my $faa_out = Bio::SeqIO->new(
 		-file   => ">" . $outfile,
 		-format => 'FASTA'
 	);
-	$outfile = ($formats->{ffn} ? '/dev/null' : $file . '.ffn');
+	#$outfile = ($formats->{ffn} ? '/dev/null' : $file . '.ffn');
+	$outfile = $file . '.ffn';
+	
 	my $ffn_out = Bio::SeqIO->new(
 		-file   => ">" . $outfile,
 		-format => 'FASTA'
@@ -338,15 +344,20 @@ sub read_and_convert {
 	#		-file   => ">" . $outfile,
 	#		-format => 'FASTA'
 	#		);
-	$outfile = ($formats->{ptt} ? '/dev/null' : $file . '.ptt');
-	open( my $PTT_OUT, '>', $outfile );
-
+	#$formats = ($outfile->{ptt} ? '/dev/null' : $file . '.ptt');
+	$outfile = $file . '.ptt';
+	open(PTT_OUT, '>', $outfile );
+	print PTT_OUT join("\t", qw(Sequence Location Strand Length PID Gene Synonym Code COG Product)),"\n";
+	my $count = 0;
 	while ( my $seq = $in->next_seq() ) {
 		# open all files
-
+		
 		my $total_length = $seq->length();
 #		my $total_seq    = $seq->seq();
 
+		#print "ID: ".$seq->id."\n";
+		#print $seq->description, " - 1..", $seq->length, "\n";
+		
 		#Create fna file
 		#$success = $fna_out->write_seq($seq);
 		#if ($success == 0) {
@@ -360,23 +371,19 @@ sub read_and_convert {
 		my @tmp_cds;
 		foreach (@cds) {
 				unless ( $_->has_tag('pseudo') ) {
-			push( @tmp_cds, $_ );
+					push( @tmp_cds, $_ );
 				}
 		}
 		@cds = @tmp_cds;
 
-		my $num_proteins = scalar(@cds);
-
+		my $num_proteins = scalar(@cds);		
+		if ($num_proteins == 0) {
+			next;
+		}
 		#Create header for ptt file
-		print $PTT_OUT $seq->description, " - 1..", $seq->length, "\n";
-		print $PTT_OUT $num_proteins, " proteins\n";
-		print $PTT_OUT join(
-				"\t", qw(Location Strand Length PID Gene Synonym Code COG
-					Product)
-				),
-				"\n";
-
-		my $count = 0;
+		#print PTT_OUT $seq->description."\t".$seq->id."\t- 1..", $seq->length, "\n";
+		#print PTT_OUT $num_proteins, " proteins\n";
+		#print PTT_OUT join("\t", qw(Sequence Location Strand Length PID Gene Synonym Code COG Product)),"\n";
 
 		#Step through each protein
 		foreach my $feat (@cds) {
@@ -413,7 +420,7 @@ sub read_and_convert {
 
 			my $strand_expand  = $strand >= 0 ? '+' : '-';
 			my $strand_expand2 = $strand >= 0 ? ''  : 'c';
-			my $desc = "\:$strand_expand2" . "$start..$end";
+			my $desc = "seq:" . $seq->id ."\:$strand_expand2" . "$start..$end";
 
 			$desc = "ref\|$ref_accnum\|gi\|$gi\|" . $desc;
 
@@ -451,6 +458,7 @@ sub read_and_convert {
 			my $cog = '-';
 			$cog = $1 if tag( $feat, 'product' ) =~ m/^(COG\S+)/;
 			my @col = (
+			$seq->id,
 			$start . '..' . $end,
 			$strand_expand,
 			( $length / 3 ) - 1,
@@ -461,8 +469,7 @@ sub read_and_convert {
 			$cog,
 			tag( $feat, 'product' ),
 			);
-				print $PTT_OUT join( "\t", @col ), "\n";
-
+				print PTT_OUT join( "\t", @col ), "\n";
 			}    #end of foreach
 
 		# Save the details of the file we just loaded
@@ -475,11 +482,10 @@ sub read_and_convert {
 		$self->{formats} = $self->parse_formats($self->find_file_types());
 	#	$self->{type} = 'custom';
 		$self->{genome_read} = 1;
-
-		close($PTT_OUT);
-  }    #end of while
-    
-}    #end of read_and_convert
+	
+	}    #end of while
+	close(PTT_OUT);    
+}   #end of read_and_convert
 
 # REMOVE THIS FUNCTIONS?
 # We really need to go back to square one and manage the files and
