@@ -94,9 +94,9 @@ sub run {
 
     my @islands = $self->run_dimob($filename);
 
-    print Dumper \@islands;
+    ##print Dumper \@islands;
 
-### TO REMOVE
+	### TO REMOVE
     if(@islands) {
 			# If we get a undef set it doesn't mean failure, just
 			# nothing found.  Write the results to the callback
@@ -105,7 +105,7 @@ sub run {
 					$callback->record_islands($module_name, @islands);
 			}
     }
-### TO REMOVE
+	### TO REMOVE
 
 
     # We just return 1 because any failure for this module
@@ -192,7 +192,9 @@ sub run_dimob {
     #calculate the dinuc bias for each gene cluster of 6 genes
     #input is a fasta file of ORF nucleotide sequences
     $logger->debug("Calculating dinucleotide bias");
-    my $dinuc_results = cal_dinuc("$filename.ffn");
+    my $out_bias = $filename.".dinuc_bias.csv";
+    my $dinuc_results = cal_dinuc("$filename.ffn", $out_bias);
+    $logger->debug("Information printed in file: ".$out_bias);
     my @dinuc_values;
     foreach my $val (@$dinuc_results) {
     	push @dinuc_values, $val->{'DINUC_bias'};
@@ -203,7 +205,7 @@ sub run_dimob {
     my $sd   = cal_stddev( \@dinuc_values );
 
     #generate a list of dinuc islands with ffn fasta file def line as the hash key
-    my $gi_orfs = dinuc_islands( $dinuc_results, $median, $sd, 8 );
+    my $gi_orfs = dinuc_islands( $dinuc_results, $median, $sd, 8);
 
     #convert the def line to gi numbers (the data structure is maintained)
     my $extended = $self->{extended_ids} ? 1 : undef;
@@ -212,6 +214,9 @@ sub run_dimob {
     #check the dinuc islands against the mobility gene list
     #any dinuc islands containing >=1 mobility gene are classified as
     #dimob islands
+    
+    ##print Dumper $dinuc_islands;
+    
     $logger->debug("Looking for regions with dinuc bias and mobility genes");
     my $dimob_islands = dimob_islands( $dinuc_islands, $mob_list );
 
