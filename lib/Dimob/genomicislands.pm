@@ -36,6 +36,7 @@ use File::Basename;
 use Statistics::Descriptive;
 use Getopt::Long;
 use Carp;
+use Data::Dumper;
 
 use Dimob::tabdelimitedfiles;
 
@@ -60,14 +61,12 @@ sub cal_dinuc {
 	##if an output file name is provided, write the results to a file
 	##otherwise, just output the results as a hash
 	if ($output_file) {
-		open( OUTFILE, ">$output_file" )
-		  or croak "Can not open output file $output_file.\n";
+		open( OUTFILE, ">$output_file" ) or croak "Can not open output file $output_file.\n";
 	}
 	my $genome = Bio::SeqIO->new(
 		'-file'   => $input_fasta,
 		'-format' => 'Fasta'
-	  )
-	  or croak "no $input_fasta\n";
+	  ) or croak "no $input_fasta\n";
 	my $seqobj;
 	my $seqleng;     # sequence length
 	my $seqshift;    # seqobj with 1 nucleotide shift (N2 to Nn)
@@ -90,10 +89,8 @@ sub cal_dinuc {
 	my $direvshifthash_ref;
 	my %genomemono;     # hash of cumulative monomer counts of all ORFs
 	my %genomedi;       # hash of cumulative dinuc counts of all ORFs
-	my @allorfsdi
-	  ;    # array of hash of dinuc counts of each of the ORFs in a genome
-	my @allorfsmono
-	  ;    #array of hash of monomer counts of each of the ORFs in a genome
+	my @allorfsdi;    # array of hash of dinuc counts of each of the ORFs in a genome
+	my @allorfsmono;    #array of hash of monomer counts of each of the ORFs in a genome
 
 	## since SeqWords only returns keys of dinucleotides that are present
 	## in the sequence, it is necessary to fill the hash with all
@@ -106,6 +103,7 @@ sub cal_dinuc {
 	while ( $seqobj = $genome->next_seq() ) {
 		push @ORF_ids, $seqobj->id;
 		$seqleng = $seqobj->length();
+	
 		##if even number of dinucleotides in the ORF
 		if ( $seqleng % 2 == 0 ) {
 			$seqshift = Bio::PrimarySeq->new(
@@ -118,18 +116,17 @@ sub cal_dinuc {
 			$seq_word      = Bio::Tools::SeqWords2->new( -seq => $seqobj );
 			$seq_wordshift = Bio::Tools::SeqWords2->new( -seq => $seqshift );
 			$seqrev        = $seqobj->revcom;
-
-#print SEQOUTFILE "The revcom of ".$seqobj->display_id()."is ".$seqrev->seq()."\n";
+			#print SEQOUTFILE "The revcom of ".$seqobj->display_id()."is ".$seqrev->seq()."\n";
+			
 			$seqrevshift = Bio::PrimarySeq->new(
 				-seq      => ( $seqrev->subseq( 2, $seqleng - 1 ) ),
 				-alphabet => 'dna',
 				-id       => ( $seqrev->display_id )
 			);
+	  		#print SEQOUTFILE "The shifted rev sequence is ".$seqrevshift->seq()."\n";
 
-	  #print SEQOUTFILE "The shifted rev sequence is ".$seqrevshift->seq()."\n";
 			$seq_wordrev = Bio::Tools::SeqWords2->new( -seq => $seqrev );
-			$seq_wordrevshift =
-			  Bio::Tools::SeqWords2->new( -seq => $seqrevshift );
+			$seq_wordrevshift = Bio::Tools::SeqWords2->new( -seq => $seqrevshift );
 			$monohash_ref         = $seq_word->count_words('1');
 			$monorevhash_ref      = $seq_wordrev->count_words('1');
 			$monoshifthash_ref    = $seq_wordshift->count_words('1');
@@ -138,8 +135,7 @@ sub cal_dinuc {
 			$dishifthash_ref      = $seq_wordshift->count_words('2');
 			$direvhash_ref        = $seq_wordrev->count_words('2');
 			$direvshifthash_ref   = $seq_wordrevshift->count_words('2');
-		}
-		else {
+		} else {
 			$seqtrunc = Bio::PrimarySeq->new(
 				-seq      => ( $seqobj->subseq( 1, $seqleng - 1 ) ),
 				-alphabet => 'dna',
@@ -150,28 +146,28 @@ sub cal_dinuc {
 				-alphabet => 'dna',
 				-id       => ( $seqobj->display_id )
 			);
-
 			#print SEQOUTFILE "The shifted sequence is ".$seqshift->seq()."\n";
+
 			$seq_word      = Bio::Tools::SeqWords2->new( -seq => $seqtrunc );
 			$seq_wordshift = Bio::Tools::SeqWords2->new( -seq => $seqshift );
 			$seqrev        = $seqobj->revcom;
+			#print SEQOUTFILE "The revcom of ".$seqobj->display_id()."is ".$seqrev->seq()."\n";
 
-#print SEQOUTFILE "The revcom of ".$seqobj->display_id()."is ".$seqrev->seq()."\n";
 			$seqrevtrunc = Bio::PrimarySeq->new(
 				-seq      => ( $seqrev->subseq( 1, $seqleng - 1 ) ),
 				-alphabet => 'dna',
 				-id       => ( $seqrev->display_id )
 			);
+
 			$seqrevshift = Bio::PrimarySeq->new(
 				-seq      => ( $seqrev->subseq( 2, $seqleng ) ),
 				-alphabet => 'dna',
 				-id       => ( $seqrev->display_id )
 			);
-
-	  #print SEQOUTFILE "The shifted rev sequence is ".$seqrevshift->seq()."\n";
+			#print SEQOUTFILE "The shifted rev sequence is ".$seqrevshift->seq()."\n";
+			
 			$seq_wordrev = Bio::Tools::SeqWords2->new( -seq => $seqrevtrunc );
-			$seq_wordrevshift =
-			  Bio::Tools::SeqWords2->new( -seq => $seqrevshift );
+			$seq_wordrevshift = Bio::Tools::SeqWords2->new( -seq => $seqrevshift );
 			$monohash_ref         = $seq_word->count_words('1');
 			$monorevhash_ref      = $seq_wordrev->count_words('1');
 			$monoshifthash_ref    = $seq_wordshift->count_words('1');
@@ -216,12 +212,9 @@ sub cal_dinuc {
 
 		# make sure the hash has a full set of dinucleotide keys
 		foreach $dinuc_key (@dinuc_keys) {
-			if ( exists $dihash{$dinuc_key} ) {
-			}
-			else {
+			if (!exists $dihash{$dinuc_key} ) {
 				$dihash{$dinuc_key} = 0;
-			}
-		}
+		}}
 
 		#		  #print out the mononuc counts of each ORF - works
 		#		  foreach my $key(sort keys %monohash)
@@ -347,40 +340,40 @@ sub cal_dinuc {
 	}
 
 	if ($output_file) {
-		print OUTFILE "ORFs_dinucleotide_analysis_for $fasta_name\n";
+		print "ORFs dinucleotide analysis for $fasta_name\n";
 		my $bias2;
 		my $count = 0;
+		print OUTFILE "ORF1,ORF2,id1,id2,bias\n";
 		foreach $bias2 (@biases) {
-			$count++;
-			$bias2 = $bias2 * 1000;
-			printf OUTFILE
-			  "ORF%5d-ORF%5d($ORF_ids[$count]-$ORF_ids[$count+5])=%5.2f\n",
-			  $count, ( $count + 5 ), $bias2;
+			## $count++; ## if here, ORF_ids[0] is missing
+			my $tmp_bias2 = $bias2 * 1000;
+			my $tmp=$count+6;
+			printf OUTFILE $count.",".$tmp.",".$ORF_ids[$count].",".$ORF_ids[$count+5].",".$tmp_bias2."\n"; ## return csv instead
+ 			$count++; ## fix missing $ORF_ids[0]
 		}
 		close OUTFILE;
-		return;
+	} ## print into a file and return values: not excluding
+	
+	my $bias2;
+	my $count = 0;
+	my $range = 5;
+	my @results;
+	
+	#print Dumper @biases;
+	foreach $bias2 (@biases) {
+		## $count++; ## if here, ORF_ids[0] is missing
+		my $tmp_bias2      = $bias2 * 1000;
+		my $key_string = "ORF".$count."(".$ORF_ids[$count].")-ORF".($count + $range)."(".$ORF_ids[$count + $range ].")";
+		push @results, { ORF_label => $key_string, DINUC_bias => $tmp_bias2 };
+		$count++; ## fix missing $ORF_ids[0]
 	}
-	else {
-		my $bias2;
-		my $count = 0;
-		my $range = 5;
-		my @results;
-		my $key_string;
-		foreach $bias2 (@biases) {
-			$count++;
-			$bias2      = $bias2 * 1000;
-			$key_string =
-			    "ORF" . $count . "("
-			  . $ORF_ids[$count] . ")-ORF"
-			  . ( $count + $range ) . "("
-			  . $ORF_ids[ $count + $range ] . ")";
-			push @results, { ORF_label => $key_string, DINUC_bias => $bias2 };
-		}
-		return \@results;
-	}
+	return \@results;
 }
 
 sub dinuc_islands {
+
+## control for different contig sequences
+
 
 #Determine which ORFs are in Dinuc Biased region and return their IDs and bias values
 #input a array of a hash containing ORF names (IDs) and their dinuc bias values (from cal_dinuc)
@@ -396,8 +389,9 @@ sub dinuc_islands {
 	#in this round, keep track all ORFs that have dinuc bias
 	#regardless the cutoff, we'll eliminate the fragments smaller
 	#than the cutoff later.
-	my $i =
-	  0;    #for keeping track the index of array elements that have dinuc bias
+
+	my $i = 0;    #for keeping track the index of array elements that have dinuc bias
+
 	foreach my $ORF_dinuc (@$ORFs_dinuc_array) {
 		my $orfdbias = $ORF_dinuc->{'DINUC_bias'};
 		if ( $orfdbias > $mean + ( $sd * 2 ) ) {
@@ -532,11 +526,10 @@ sub defline2gi {
 	my $dinucislands = shift @_;
 	my $pttfilename  = shift @_;
 	my $extended_ids = @_ ? shift : 0;
-	my $header_line  = 3;
+	my $header_line  = 1; ## header is in line 1
 	my @result_islands;
-	my ( $header_arrayref, $pttfh ) =
-	  extract_headerandbodyfh( $pttfilename, $header_line );
-	my $ptt_table_hashref = table2hash_rowfirst( $header_arrayref, $pttfh, 1 );
+	my ( $header_arrayref, $pttfh ) = extract_headerandbodyfh( $pttfilename, $header_line );
+	my $ptt_table_hashref = table2hash_rowfirst( $header_arrayref, $pttfh, 2); ## in column1 is the sequence
 	foreach my $island (@$dinucislands) {
 		my @result_orfs;
 		ORF: foreach my $orf_index (@$island) {
@@ -546,7 +539,10 @@ sub defline2gi {
 			my $orf_start;
 			my $orf_end;
 			my $pid;
-#			print "$orf1\n";
+			
+			print $def_label."\n";
+			print "$orf1\n";
+			
 			if ( $orf1 =~ /\|:(\d+)\.\.(\d+)\)/ ) {
 				$orf_start = $1;
 				$orf_end   = $2;
