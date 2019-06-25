@@ -55,9 +55,9 @@ MAIN: {
     #my $logger_conf = "$RealBin/logger.conf";
 
     # usage help
-    my $usage = "Usage:\n./Dimob.pl <genome.gbk> <outputfile.txt>\nExample:\n./Dimob.pl example/NC_003210.gbk NC_003210_GIs.txt\n";
+    my $usage = "Usage:\n./Dimob.pl <genome.gbk> <outputfile.txt> cutoff_genes[int]\nExample:\n./Dimob.pl example/NC_003210.gbk NC_003210_GIs.txt 8\n";
 
-    my ($inputfile, $outputfile) = @ARGV;
+    my ($inputfile, $outputfile, $cutoff_genes) = @ARGV;
 
     # Check that input file and output file are specified or die and print help message
     unless(defined($inputfile) && defined($outputfile)){
@@ -89,14 +89,21 @@ MAIN: {
     $cfg->{hmmer_db} = "$RealBin/" . $cfg->{hmmer_db};
 
     # Check that the logger exists and initializes it
-    print $cfg->{logger_conf};
+    #print $cfg->{logger_conf};
     if($cfg->{logger_conf} && ( -r $cfg->{logger_conf})) {
         Log::Log4perl::init($cfg->{logger_conf});
         $logger = Log::Log4perl->get_logger;
         $logger->debug("Logging initialized");
     }
 
-
+	## check if $cutoff_genes provided
+	if (!$cutoff_genes) {
+		$cutoff_genes = 8;
+        $logger->debug("Use cutoff_genes default: 8");
+	} else {
+        $logger->debug("Use cutoff_genes provided: ".$cutoff_genes);
+	}
+	
     # Create a tmp directory to store intermediate results, copy the input file to the tmp
     $logger->info("Creating temp directory with needed files");
     my($filename, $dirs, $suffix) = fileparse($inputfile, qr/\.[^.]+$/);
@@ -132,7 +139,7 @@ MAIN: {
     # Runs IslandPath-DIMOB on the genome files
 
     $logger->info("Running IslandPath-DIMOB");
-    my @islands = $dimob_obj->run_dimob($inputfile);
+    my @islands = $dimob_obj->run_dimob($inputfile, $outputfile, $cutoff_genes);
 
     $logger->info("Printing results");
 
@@ -141,13 +148,16 @@ MAIN: {
     foreach my $island (@islands) {
         my $start = $island->[0];
         my $end = $island->[1];
-        print $fhgd "GI_$i\t$start\t$end\n";
+        my $seq = $island->[2];
+        print $fhgd "GI_$i\t$seq\t$start\t$end\n";
         $i++;
     }
     close $fhgd;
-
+	
+	exit();
+	
     $logger->info("Removing tmp files");
-    unless(unlink glob "$inputfile.*") {
+ 	unless(unlink glob "$inputfile.*") {
         $logger->error("Can't remove $inputfile: $!");
     }
     unless(rmdir $tmp_path) {

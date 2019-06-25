@@ -727,7 +727,7 @@ sub find_file_types {
     my $return_array = shift;
 
     unless($base_filename) {
-	$logger->trace("No base filename given in args, trying to use object default: " . $self->{base_filename});
+	#$logger->trace("No base filename given in args, trying to use object default: " . $self->{base_filename});
 	$base_filename = $self->{base_filename};
     }
 

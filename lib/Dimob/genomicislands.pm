@@ -28,6 +28,9 @@
 
 package Dimob::genomicislands;
 
+## Added: 25 June 2019 by J.F.Sanchez-Herrero
+## Add multicontig. Calculate dinuc bias within contig
+
 use strict;
 use warnings;
 use Bio::SeqIO;
@@ -339,45 +342,42 @@ sub cal_dinuc {
 		$biases[$index] = ( $bias / 16 );
 	}
 
-	if ($output_file) {
-		print "ORFs dinucleotide analysis for $fasta_name\n";
-		my $bias2;
-		my $count = 0;
-		print OUTFILE "ORF1,ORF2,id1,id2,bias\n";
-		foreach $bias2 (@biases) {
-			## $count++; ## if here, ORF_ids[0] is missing
-			my $tmp_bias2 = $bias2 * 1000;
-			my $tmp=$count+6;
-			printf OUTFILE $count.",".$tmp.",".$ORF_ids[$count].",".$ORF_ids[$count+5].",".$tmp_bias2."\n"; ## return csv instead
- 			$count++; ## fix missing $ORF_ids[0]
-		}
-		close OUTFILE;
-	} ## print into a file and return values: not excluding
-	
+	print "ORFs dinucleotide analysis for $fasta_name\n";
 	my $bias2;
 	my $count = 0;
-	my $range = 5;
 	my @results;
-	
-	#print Dumper @biases;
+	print OUTFILE "id1,id2,ORF1,contig_ORF1,ORF2,contig_ORF2,bias\n";
 	foreach $bias2 (@biases) {
 		## $count++; ## if here, ORF_ids[0] is missing
-		my $tmp_bias2      = $bias2 * 1000;
-		my $key_string = "ORF".$count."(".$ORF_ids[$count].")-ORF".($count + $range)."(".$ORF_ids[$count + $range ].")";
-		push @results, { ORF_label => $key_string, DINUC_bias => $tmp_bias2 };
+		my $tmp_bias2 = $bias2 * 1000;
+		my $tmp=$count+6;
+		my $orf1 = $ORF_ids[$count];
+		my $orf2 = $ORF_ids[$count+5];
+		my $seq1; my $seq2;
+
+		## get contig id
+		if ( $orf1 =~ /\|seq\:(.*)\:.*/ ) { $seq1 = $1 }
+		if ( $orf2 =~ /\|seq\:(.*)\:.*/ ) { $seq2 = $1 }
+		
+		## skip if different contig ids
+		if ($seq1 ne $seq2) {  
+			$count++; ## fix missing $ORF_ids[0]
+			next; 
+		} 
+		my $key_string = $count.",".$tmp.",".$orf1.",".$seq1.",".$orf2.",".$seq2.",".$tmp_bias2; ## return csv instead
+		printf OUTFILE $key_string."\n";
+		push (@results, { ORF_label => $key_string, DINUC_bias => $tmp_bias2 });
 		$count++; ## fix missing $ORF_ids[0]
 	}
+	close OUTFILE;
 	return \@results;
 }
 
 sub dinuc_islands {
 
-## control for different contig sequences
-
-
-#Determine which ORFs are in Dinuc Biased region and return their IDs and bias values
-#input a array of a hash containing ORF names (IDs) and their dinuc bias values (from cal_dinuc)
-#also input the mean and the standard deviation values (from cal_mean and cal_stddev)
+	#Determine which ORFs are in Dinuc Biased region and return their IDs and bias values
+	#input a array of a hash containing ORF names (IDs) and their dinuc bias values (from cal_dinuc)
+	#also input the mean and the standard deviation values (from cal_mean and cal_stddev)
 
 	my $ORFs_dinuc_array = shift @_;
 	my $mean             = shift @_;
@@ -391,7 +391,6 @@ sub dinuc_islands {
 	#than the cutoff later.
 
 	my $i = 0;    #for keeping track the index of array elements that have dinuc bias
-
 	foreach my $ORF_dinuc (@$ORFs_dinuc_array) {
 		my $orfdbias = $ORF_dinuc->{'DINUC_bias'};
 		if ( $orfdbias > $mean + ( $sd * 2 ) ) {
@@ -410,8 +409,7 @@ sub dinuc_islands {
 					push @dinuc, $temp;
 				}
 			}
-		}
-		elsif ( $orfdbias > $mean + $sd ) {
+		} elsif ( $orfdbias > $mean + $sd ) {
 			my @temp;
 			my $temp;
 			push @temp, $i;
@@ -463,15 +461,28 @@ sub dinuc_islands {
 			}
 		}
 	}
+	
 
 	# We will merge regions of dinuc_abovecut that are less than 5 genes apart
 	# We do not export the last gene of each dinuc_abovecut as adding the last gene significantly
 	# diminishes precision more than it increases recall.
+	my $previous_contig = "";
 	for ( my $i = 0 ; $i < (scalar(@dinuc_abovecut)-1) ; $i++ ) {
-		if ( ( $dinuc_abovecut[$i] + 1) == ( $dinuc_abovecut[ $i + 1 ] ) ) {
-			push @{ $islands[$island_index] }, $ORFs_dinuc_array->[ $dinuc_abovecut[$i]];
+		
+		## control for different contig sequences
+		my $def_label = $ORFs_dinuc_array->[$dinuc_abovecut[$i]]->{'ORF_label'};
+		my ($id1, $id2, $orf1, $contig_ORF1, $orf2, $contig_ORF2, $bias) = split ',', $def_label;
+		if (!$previous_contig) { $previous_contig = $contig_ORF1; }
+		if ($previous_contig eq $contig_ORF1) {
+		} else { 
+			$previous_contig = $contig_ORF1;
+			$island_index++;
 		}
-		elsif ( ( $dinuc_abovecut[$i] + 6) >= ( $dinuc_abovecut[ $i + 1 ] ) ) {
+		## control for different contig sequences
+		
+		if ( ( $dinuc_abovecut[$i] + 1) == ( $dinuc_abovecut[ $i + 1 ] ) ) {
+			push @{ $islands[$island_index] }, $ORFs_dinuc_array->[ $dinuc_abovecut[$i] ];
+		} elsif ( ( $dinuc_abovecut[$i] + 6) >= ( $dinuc_abovecut[ $i + 1 ] ) ) {
 			my $dif = $dinuc_abovecut[ $i + 1 ]-$dinuc_abovecut[$i]-1;
 			for (my $j = 0; $j <= $dif; $j++ ) {
 				push @{ $islands[$island_index] }, $ORFs_dinuc_array->[ $dinuc_abovecut[$i]+$j];
@@ -486,11 +497,8 @@ sub dinuc_islands {
 	}
 	# We do not export the last gene of the last dinuc island for the same reasons as mentioned above
 	# push @{ $islands[$island_index] }, $ORFs_dinuc_array->[ $dinuc_abovecut[-1] ];
-
 	return \@islands;
 }
-
-
 
 sub dimob_islands {
 
@@ -500,8 +508,23 @@ sub dimob_islands {
 
 	my $dinuc_island_orfs = shift;
 	my $mobgenes          = shift;
-	#	print Dumper $dinuc_island_orfs;
 	my @dimob_island_orfs;
+	
+	###############
+	## dinuc_island_orfs
+	###############
+	## 'ORF_label' => '16804840_2888639..2889001',
+    ## 'DINUC_bias' => '133.287399842604',
+    ## 'seq' => 'NC_003210',
+    ## 'start' => '2888639',
+    ## 'end' => '2889001'
+
+	###############
+	## mob list
+	###############
+	# 'ref|NP_463859.1|gi|16802374|seq:NC_003210:356567..356872' => 1,
+	# 'ref|YP_008475635.1|gi|533240825|seq:NC_003210:c1132787..1132987' => 1,
+	# '16804339_NC_003210' => 1,
 	
 	foreach my $island (@$dinuc_island_orfs){
 		my $is_dimob= 0; #false
@@ -509,12 +532,24 @@ sub dimob_islands {
 			my $orf_ginum = $orf->{'ORF_label'};
 			if (exists $mobgenes->{$orf_ginum}){
 				$is_dimob = 1; #true
+			} else {
+				my $orf_name = $orf->{'orf1'};
+				if (exists $mobgenes->{$orf_name}){
+					$is_dimob = 1; #true
+				} else {
+					my $tag_name = $orf->{'ORF_label'}.'_'.$orf->{'seq'};
+					if (exists $mobgenes->{$tag_name}){
+						$is_dimob = 1; #true
+					}
+				}
 			}
 		}
-		if ($is_dimob){
+	    #any dinuc islands containing >=1 mobility gene are classified as dimob islands
+		if ($is_dimob){ 
 			push @dimob_island_orfs, $island;
 		}
 	}
+	
 	return \@dimob_island_orfs;
 }
 
@@ -530,44 +565,50 @@ sub defline2gi {
 	my @result_islands;
 	my ( $header_arrayref, $pttfh ) = extract_headerandbodyfh( $pttfilename, $header_line );
 	my $ptt_table_hashref = table2hash_rowfirst( $header_arrayref, $pttfh, 2); ## in column1 is the sequence
+
 	foreach my $island (@$dinucislands) {
 		my @result_orfs;
 		ORF: foreach my $orf_index (@$island) {
 			my $def_label = $orf_index->{'ORF_label'};
 			next ORF unless($def_label);
-			my ( $orf1, $orf2 ) = split '-ORF', $def_label;
-			my $orf_start;
-			my $orf_end;
-			my $pid;
+			##my ( $orf1, $orf2 ) = split '-ORF', $def_label;
+			my ($id1, $id2, $orf1, $contig_ORF1, $orf2, $contig_ORF2, $bias) = split ',', $def_label;
+			my ($orf_start, $orf_end, $pid, $contig, $annotation);
+
+			if ($contig_ORF1 ne $contig_ORF2) {
+				print "Different contigs...\n";
+				next;
+			}
 			
-			print $def_label."\n";
-			print "$orf1\n";
-			
-			if ( $orf1 =~ /\|:(\d+)\.\.(\d+)\)/ ) {
-				$orf_start = $1;
-				$orf_end   = $2;
+			if ( $orf1 =~ /.*\|seq\:(.*)\:c{0,1}(\d+)\.\.(\d+).*/ ) {
+				$contig = $1;
+				$orf_start = $2;
+				$orf_end   = $3;
+
 				my $coordinate = "$orf_start..$orf_end";
 			 	$pid = $ptt_table_hashref->{$coordinate}->{'PID'};
+			 	
+			 	$annotation = $ptt_table_hashref->{$coordinate}->{'Synonym'}.";".
+							 	$ptt_table_hashref->{$coordinate}->{'Gene'}.";".
+							 	$ptt_table_hashref->{$coordinate}->{'Product'};
+			 	
+			 	#print "####\n";
+			 	#print $orf1."\n";
+			 	#print $contig."\n";
+			 	#print $coordinate."\n";
+			 	#print $pid."\n";
+			 	#print "####\n";
+
 				if($extended_ids) {
 #				    print "Using extended\n";
 				    $pid .= "_$orf_start" . '..' . $orf_end;
 				}
+
 				unless(defined($pid)){
 				    #warn "Could not find pid";
 				}
-			}elsif ( $orf1 =~ /\|:c(\d+)\.\.(\d+)\)/ ) {
-				$orf_start = $1;
-				$orf_end   = $2;
-				my $coordinate = "$orf_start..$orf_end";
-				$pid = $ptt_table_hashref->{$coordinate}->{'PID'};
-				if($extended_ids) {
-#				    print "Using extended (comp)\n";
-				    $pid .= "_$orf_start" . '..' . $orf_end;
-				}
-				unless(defined($pid)){
-				    #warn "Could not find pid";
-				}
-			    }
+
+			}
 			#Morgan Hack: sometimes we don't need look up pid by coordinates
 			elsif($orf1 =~ /\((\d+)\)/ ){
                 $pid=$1;	
@@ -580,10 +621,17 @@ sub defline2gi {
 			$orf_index->{'ORF_label'} = $pid;
 			$orf_index->{'start'}=$orf_start;
 			$orf_index->{'end'}=$orf_end;
+			$orf_index->{'seq'}=$contig;
+			$orf_index->{'annot'}=$annotation;
+			$orf_index->{'orf1'}=$orf1;
+			
 			push @result_orfs, $orf_index;
 		}
 		push @result_islands, [@result_orfs];
-	}    
+	}
+
+	print Dumper \@result_islands;
+	
 	return \@result_islands;
 }
 

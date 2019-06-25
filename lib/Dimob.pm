@@ -117,6 +117,8 @@ sub run {
 sub run_dimob {
     my $self = shift;
     my $filename = shift;
+    my $out_put_name = shift;
+    my $cutoff_island = shift;
     my @tmpfiles;
 
     # We're given the filename, look up the files
@@ -180,6 +182,7 @@ sub run_dimob {
     foreach(keys %$mobgenes){
     	$mob_list->{$_}=1;   
     }
+    #print Dumper $mob_list;
 
     #get a list of mobility genes from ptt file based on keyword match
     $logger->debug("Retrieving mobility genes from ptt file");
@@ -187,12 +190,13 @@ sub run_dimob {
 
     foreach(keys %$mobgene_ptt){
     	$mob_list->{$_}=1;   
-    }
+    }    
+    #print Dumper $mob_list;
 
     #calculate the dinuc bias for each gene cluster of 6 genes
     #input is a fasta file of ORF nucleotide sequences
     $logger->debug("Calculating dinucleotide bias");
-    my $out_bias = $filename.".dinuc_bias.csv";
+    my $out_bias = $out_put_name.".dinuc_bias.csv";
     my $dinuc_results = cal_dinuc("$filename.ffn", $out_bias);
     $logger->debug("Information printed in file: ".$out_bias);
     my @dinuc_values;
@@ -205,7 +209,7 @@ sub run_dimob {
     my $sd   = cal_stddev( \@dinuc_values );
 
     #generate a list of dinuc islands with ffn fasta file def line as the hash key
-    my $gi_orfs = dinuc_islands( $dinuc_results, $median, $sd, 8);
+    my $gi_orfs = dinuc_islands( $dinuc_results, $median, $sd, $cutoff_island);
 
     #convert the def line to gi numbers (the data structure is maintained)
     my $extended = $self->{extended_ids} ? 1 : undef;
@@ -215,32 +219,54 @@ sub run_dimob {
     #any dinuc islands containing >=1 mobility gene are classified as
     #dimob islands
     
-    ##print Dumper $dinuc_islands;
-    
     $logger->debug("Looking for regions with dinuc bias and mobility genes");
     my $dimob_islands = dimob_islands( $dinuc_islands, $mob_list );
 
-    my @gis;
-    foreach (@$dimob_islands) {
+	## print additional results for each GI
+    $logger->info("Printing results");
+	my $out_gis_file = $out_put_name."_gi.csv";
+    open (OUT, '>', $out_gis_file) or die "Cannot open out put file $!";
+	print OUT "GI_id,sequence,start,end,orf_name,annotation\n";
 
+    ## print information and return
+    my @gis;
+    my $isle=1;
+
+    foreach (@$dimob_islands) {
     	#get the pids from the  for just the start and end genes
+    	## check if start and ends exist
     	unless($_->[0]{start} && $_->[-1]{end}) {
     		$logger->warn("Warning, GI is missing either start or end: ($_->[0]{start}, $_->[-1]{end})");
     		next;
     	}
+    	
+    	## check if both in the same sequence
+    	if ($_->[0]{seq} ne $_->[-1]{seq}) {
+    		$logger->warn("Warning, GI has different sequence identifiers: ($_->[0]{seq}, $_->[-1]{seq})");
+    		next;
+    	}    	
+    	## return information for the islands: start, end, sequence ID
+		push (@gis, [ $_->[0]{start}, $_->[-1]{end}, $_->[-1]{seq} ]);
 
-			push (@gis, [ $_->[0]{start}, $_->[-1]{end}]);
-			#my $start = $_->[0]{start};
-			#my $end = $_->[-1]{end};		 
-			#print "$start\t$end\n";    
+		for (my $i=0; $i < scalar @{ $_ }; $i++) {
+			my $string = "GI_".$isle.",".$_->[$i]{seq}.",".$_->[$i]{start}.",".$_->[$i]{end}.",".$_->[$i]{orf1}.",".$_->[$i]{annot};
+			### print into a file
+			print OUT $string."\n";
+		}
+		
+		#my $start = $_->[0]{start};
+		#my $end = $_->[-1]{end};		 
+		#print "$start\t$end\n";    
+		$isle++;
     }
+	close (OUT);
 		
     # And cleanup after ourself
     $logger->debug("Cleaning temporary files");
 
     if($cfg->{clean_tmpfiles}) {
         $logger->trace("Cleaning up temp files for Dimob");
-        $self->_remove_tmpfiles(@tmpfiles);
+        #$self->_remove_tmpfiles(@tmpfiles);
     }
 
     return @gis;
