@@ -630,8 +630,6 @@ sub defline2gi {
 		push @result_islands, [@result_orfs];
 	}
 
-	print Dumper \@result_islands;
-	
 	return \@result_islands;
 }
 

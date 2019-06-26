@@ -154,8 +154,6 @@ MAIN: {
     }
     close $fhgd;
 	
-	exit();
-	
     $logger->info("Removing tmp files");
  	unless(unlink glob "$inputfile.*") {
         $logger->error("Can't remove $inputfile: $!");
