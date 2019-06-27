@@ -18,15 +18,16 @@
 	Example:
 		perl Dimob.pl example/NC_003210.gbk NC_003210_GIs
 		perl Dimob.pl example/NC_003210.gbk NC_003210_GIs 6 10000
+		perl Dimob.pl example/NC_000913.embl NC_000913_GIs 6 10000
 
 =head1 AUTHORS
 
-	Claire Bertelli
+	Claire Bertelli [Original author]
 	Email: claire.bertelli@sfu.ca
     Brinkman Laboratory
     Simon Fraser University
     
-   	Jose F. Sanchez-Herrero
+   	Jose F. Sanchez-Herrero [Developer of this fork]
 	Email: jsanchez@igtp.cat
 	Bioinformatics Facility Unit, Institut German Trias i Pujol (IGTP) 
 	Badalona, Barcelona, Spain	
@@ -81,7 +82,8 @@ MAIN: {
     my $usage = "Usage:\nperl Dimob.pl <genome.gbk> <output_name> [cutoff_dinuc_bias] [min_length]\n";
     $usage .= "\nDefault values:\n\tcutoff_dinuc_bias = 8\n\tmin_length = 8000\n\n";
     $usage .= "Example:\n\tperl Dimob.pl example/NC_003210.gbk NC_003210_GIs\n";
-    $usage .= "\tperl Dimob.pl example/NC_003210.gbk NC_003210_GIs 6 10000\n\n";
+    $usage .= "\tperl Dimob.pl example/NC_003210.gbk NC_003210_GIs 6 10000\n";
+    $usage .= "\tperl Dimob.pl example/NC_000913.embl NC_000913_GIs 6 10000\n\n";
 
     my ($inputfile, $output_name, $cutoff_dinuc_bias, $min_length) = @ARGV;
 
