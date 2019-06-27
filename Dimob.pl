@@ -9,9 +9,15 @@
 
 =head1 SYNOPSIS
 
-    ./Dimob.pl <genome.gbk> <outputfile.txt>
-    Example:
-    ./Dimob.pl example/NC_003210.gbk NC_003210_GIs.txt
+	perl Dimob.pl <genome.gbk> <output_name> [cutoff_dinuc_bias] [min_length]
+
+	Default values:
+		cutoff_dinuc_bias = 8
+		min_length = 8000
+
+	Example:
+		perl Dimob.pl example/NC_003210.gbk NC_003210_GIs
+		perl Dimob.pl example/NC_003210.gbk NC_003210_GIs 6 10000
 
 =head1 AUTHORS
 
@@ -19,10 +25,16 @@
 	Email: claire.bertelli@sfu.ca
     Brinkman Laboratory
     Simon Fraser University
+    
+   	Jose F. Sanchez-Herrero
+	Email: jsanchez@igtp.cat
+	Bioinformatics Facility Unit, Institut German Trias i Pujol (IGTP) 
+	Badalona, Barcelona, Spain	
+
 
 =head1 LAST MAINTAINED
 
-    January 16th, 2019
+    June 27th, 2019
 
 =cut
 
@@ -45,6 +57,17 @@ use lib "$RealBin/lib";
 use GenomeUtils;
 use Dimob;
 
+## 
+## New implementations
+## 
+## Add multicontig function
+## Fix smartmacth experimental warning message
+## Fix dinuc bias loop iteration bug
+## Use GI min_length as a variable
+## Use cutoff_genes_dinuc as a variable
+## merge with gff branch 
+## Output csv information for dinucleotide bias.
+## Provide additional information in output GI information
 
 MAIN: {
 
@@ -55,12 +78,15 @@ MAIN: {
     #my $logger_conf = "$RealBin/logger.conf";
 
     # usage help
-    my $usage = "Usage:\n./Dimob.pl <genome.gbk> <outputfile.txt> [cutoff_dinuc_bias == int] [min_length == int] \nExample:\n./Dimob.pl example/NC_003210.gbk NC_003210_GIs.txt 8 8000\n";
+    my $usage = "Usage:\nperl Dimob.pl <genome.gbk> <output_name> [cutoff_dinuc_bias] [min_length]\n";
+    $usage .= "\nDefault values:\n\tcutoff_dinuc_bias = 8\n\tmin_length = 8000\n\n";
+    $usage .= "Example:\n\tperl Dimob.pl example/NC_003210.gbk NC_003210_GIs\n";
+    $usage .= "\tperl Dimob.pl example/NC_003210.gbk NC_003210_GIs 6 10000\n\n";
 
-    my ($inputfile, $outputfile, $cutoff_dinuc_bias, $min_length) = @ARGV;
+    my ($inputfile, $output_name, $cutoff_dinuc_bias, $min_length) = @ARGV;
 
     # Check that input file and output file are specified or die and print help message
-    unless(defined($inputfile) && defined($outputfile)){
+    unless(defined($inputfile) && defined($output_name)){
         print $usage;
         exit;
     }
@@ -153,26 +179,27 @@ MAIN: {
     # Runs IslandPath-DIMOB on the genome files
 
     $logger->info("Running IslandPath-DIMOB");
-    my @islands = $dimob_obj->run_dimob($inputfile, $outputfile, $cutoff_dinuc_bias);
+    my @islands = $dimob_obj->run_dimob($inputfile, $output_name, $cutoff_dinuc_bias);
 
     $logger->info("Printing results");
 
-    my $i = 1;
+	my $outputfile = $output_name.".txt";
     ## txt output
     open OUT_TXT, '>', $outputfile or die "Cannot open $outputfile: $!";
 	print OUT_TXT "##GI\tseq\tstart\tend\tstrand\n";
 		
 	## gff output
-	my $gff_file = $outputfile.".gff3";
+	my $gff_file = $output_name.".gff3";
 	open GFF, '>', $gff_file or die "Cannot open $gff_file: $!";
 	print GFF "##gff-version 3\n";
 
 	## discarded regions
-	my $discard_file = $outputfile."_discard.txt";
+	my $discard_file = $output_name."_discard.txt";
 	open DISCARD, '>', $discard_file or die "Cannot open $discard_file: $!";
 	print DISCARD "##seq\tstart\tend\tlength\tstrand\n";
 
 	## loop through islands and print
+    my $i = 1;
     foreach my $island (@islands) {
         my $seq = $island->[0];
         my $start = $island->[1];
@@ -187,8 +214,6 @@ MAIN: {
 
 		    #$logger->info("Warning: txt output is now depreciated. Support has been added to output GFF3 formatted documents. Use (any) other extension to enable GFF output. See: https://github.com/brinkmanlab/islandpath/issues/7");
 	        print OUT_TXT "GI_$i\t$seq\t$start\t$end\t$strand\n";
-
-	        #TODO use proper chromosome sequence id
 	        print GFF "$seq\tislandpath\tgenomic_island\t$start\t$end\t.\t$strand\t.\tID=$seq\_gi$i\n";
 	        $i++;
         }
@@ -196,6 +221,7 @@ MAIN: {
 	## close filehandles
     close (GFF); close (OUT_TXT); close (DISCARD);
 	
+	## finish
     $logger->info("Removing tmp files");
  	unless(unlink glob "$inputfile.*") {
         $logger->error("Can't remove $inputfile: $!");
@@ -205,13 +231,3 @@ MAIN: {
     }
 }
 
-## 
-## New implementations
-## 
-## Add multicontig function
-## Fix smartmacth experimental warning message
-## Fix dinuc bias loop iteration bug
-## Use cutoff_dinuc_bias as a variable
-## Output csv information for dinucleotide bias.
-## Provide additional information in output GI information
-## 
