@@ -68,11 +68,10 @@ sub BUILD {
     $self->log_rotate();
     $logger->trace("IslandPath-DIMOB initialized");
 
-    die "Error, work dir not specified:  $args->{workdir}"
-			unless( -d $args->{workdir} );
+	die "Error, work dir not specified:  $args->{workdir}" unless( -d $args->{workdir} );
     $self->{workdir} = $args->{workdir};
-
-    $self->{MIN_GI_SIZE} = $args->{MIN_GI_SIZE};
+	
+    $self->{MIN_GI_SIZE} = $args->{MIN_GI_SIZE}; ## set as a variable
 
     # Do we need to use extended ids because
     # there could be duplicate gis. All the files 
@@ -215,12 +214,13 @@ sub run_dimob {
     my $extended = $self->{extended_ids} ? 1 : undef;
     my $dinuc_islands = defline2gi( $gi_orfs, "$filename.ptt", $extended );
 
-    #check the dinuc islands against the mobility gene list
-    #any dinuc islands containing >=1 mobility gene are classified as
-    #dimob islands
-    
+	#check the dinuc islands against the mobility gene list
+    #any dinuc islands containing >=1 mobility gene are classified as dimob islands
     $logger->debug("Looking for regions with dinuc bias and mobility genes");
     my $dimob_islands = dimob_islands( $dinuc_islands, $mob_list );
+    
+    #print Dumper $dinuc_islands;
+    #print Dumper $mob_list;
 
 	## print additional results for each GI
     $logger->info("Printing results");
@@ -233,7 +233,6 @@ sub run_dimob {
     my $isle=1;
 
     foreach (@$dimob_islands) {
-    	#get the pids from the  for just the start and end genes
     	## check if start and ends exist
     	unless($_->[0]{start} && $_->[-1]{end}) {
     		$logger->warn("Warning, GI is missing either start or end: ($_->[0]{start}, $_->[-1]{end})");
@@ -248,16 +247,22 @@ sub run_dimob {
     	## return information for the islands: start, end, sequence ID
 		push (@gis, [ $_->[0]{start}, $_->[-1]{end}, $_->[-1]{seq} ]);
 
-		for (my $i=0; $i < scalar @{ $_ }; $i++) {
-			my $string = "GI_".$isle.",".$_->[$i]{seq}.",".$_->[$i]{start}.",".$_->[$i]{end}.",".$_->[$i]{orf1}.",".$_->[$i]{annot};
-			### print into a file
-			print OUT $string."\n";
-		}
-		
-		#my $start = $_->[0]{start};
-		#my $end = $_->[-1]{end};		 
-		#print "$start\t$end\n";    
-		$isle++;
+		## discard if smaller than expected
+        my $diff = $_->[-1]{end} - $_->[0]{start};        
+        my $min_length = $self->{MIN_GI_SIZE};
+        if ($diff <= $min_length) {
+			## do not print
+        } else {
+			for (my $i=0; $i < scalar @{ $_ }; $i++) {
+				my $string = "GI_".$isle.",".$_->[$i]{seq}.",".$_->[$i]{start}.",".$_->[$i]{end}.",".$_->[$i]{orf1}.",".$_->[$i]{annot};
+				### print into a file
+				print OUT $string."\n";
+			}
+			#my $start = $_->[0]{start};
+			#my $end = $_->[-1]{end};		 
+			#print "$start\t$end\n";    
+			$isle++;
+        }
     }
 	close (OUT);
 		
