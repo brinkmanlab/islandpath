@@ -61,6 +61,7 @@ IslandPath-DIMOB v1.0.1_b takes as input an annotated complete/draft genome as a
 ## Questions? Comments? Bugs?
 
 Email islandpick-mail@sfu.ca (contact person: Claire Bertelli) for the original version.
+
 Email jsanchez@igtp.cat (contact person: Jose F. Sanchez-Herrero) or via github issue for the modification version.
 
 
