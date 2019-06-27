@@ -9,19 +9,23 @@
 
 	see Dimob.pm
 
-=head1 AUTHOR
+=head1 AUTHORS
 
-	Claire Bertelli
+	Claire Bertelli [Original author]
 	Email: claire.bertelli@sfu.ca
-    and
-    Matthew Laird
-    Email: lairdm@sfu.ca
     Brinkman Laboratory
     Simon Fraser University
+    
+   	Jose F. Sanchez-Herrero [Developer of this fork]
+	Email: jsanchez@igtp.cat
+	Bioinformatics Facility Unit, Institut German Trias i Pujol (IGTP) 
+	Badalona, Barcelona, Spain	
+
 
 =head1 LAST MAINTAINED
 
-    Oct 24, 2016
+    June 27th, 2019
+
 
 =cut
 
