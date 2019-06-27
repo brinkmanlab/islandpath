@@ -430,8 +430,6 @@ sub dinuc_islands {
 	my @dinuc_abovecut;
 	my $count = 0;
 	my @islands;
-
-	my $island_index = 0;
 	foreach my $element (@dinuc) {
 		if ($element != $dinuc[-1]){
 			# test if numbers in the array are consecutive
@@ -467,10 +465,18 @@ sub dinuc_islands {
 	# We do not export the last gene of each dinuc_abovecut as adding the last gene significantly
 	# diminishes precision more than it increases recall.
 	my $previous_contig = "";
+	my $island_index = 0;
 	for ( my $i = 0 ; $i < (scalar(@dinuc_abovecut)-1) ; $i++ ) {
 		
+		## control if it is ok
+		my $def_label;
+		if (exists $ORFs_dinuc_array->[$dinuc_abovecut[$i]]->{'ORF_label'}) {
+			$def_label = $ORFs_dinuc_array->[$dinuc_abovecut[$i]]->{'ORF_label'};
+		} else { 
+			next;
+		}
+
 		## control for different contig sequences
-		my $def_label = $ORFs_dinuc_array->[$dinuc_abovecut[$i]]->{'ORF_label'};
 		my ($id1, $id2, $orf1, $contig_ORF1, $orf2, $contig_ORF2, $bias) = split ',', $def_label;
 		if (!$previous_contig) { $previous_contig = $contig_ORF1; }
 		if ($previous_contig eq $contig_ORF1) {
@@ -478,14 +484,26 @@ sub dinuc_islands {
 			$previous_contig = $contig_ORF1;
 			$island_index++;
 		}
-		## control for different contig sequences
 		
+		## fill information
 		if ( ( $dinuc_abovecut[$i] + 1) == ( $dinuc_abovecut[ $i + 1 ] ) ) {
 			push @{ $islands[$island_index] }, $ORFs_dinuc_array->[ $dinuc_abovecut[$i] ];
+		
+		# We will merge regions of dinuc_abovecut that are less than 5 genes apart
+		# and within the same contig region
 		} elsif ( ( $dinuc_abovecut[$i] + 6) >= ( $dinuc_abovecut[ $i + 1 ] ) ) {
+
 			my $dif = $dinuc_abovecut[ $i + 1 ]-$dinuc_abovecut[$i]-1;
 			for (my $j = 0; $j <= $dif; $j++ ) {
-				push @{ $islands[$island_index] }, $ORFs_dinuc_array->[ $dinuc_abovecut[$i]+$j];
+		
+				my $def_label_here = $ORFs_dinuc_array->[ $dinuc_abovecut[$i]+$j]->{'ORF_label'};
+				my ($id1, $id2, $orf1, $contig_ORF1, $orf2, $contig_ORF2, $bias) = split ',', $def_label_here;
+				if ($previous_contig ne $contig_ORF1) {
+					#print "Contig jump! $previous_contig & $contig_ORF1\n";
+				} else {
+					## only add info if in the same contig
+					push @{ $islands[$island_index] }, $ORFs_dinuc_array->[ $dinuc_abovecut[$i]+$j];
+				}
 			}
 		}
 		#elsif (( $dinuc_abovecut[$i] ) == ( $dinuc_abovecut[ $i - 1 ]+1 ) ) {
@@ -530,17 +548,16 @@ sub dimob_islands {
 		my $is_dimob= 0; #false
 		foreach my $orf (@$island){
 			my $orf_ginum = $orf->{'ORF_label'};
+			#print "ORF ginum: ".$orf_ginum."\n";
 			if (exists $mobgenes->{$orf_ginum}){
 				$is_dimob = 1; #true
 			} else {
 				my $orf_name = $orf->{'orf1'};
+				#print "ORF name: ".$orf_name."\n";
 				if (exists $mobgenes->{$orf_name}){
 					$is_dimob = 1; #true
 				} else {
-					my $tag_name = $orf->{'ORF_label'}.'_'.$orf->{'seq'};
-					if (exists $mobgenes->{$tag_name}){
-						$is_dimob = 1; #true
-					}
+					#print "Dont know...\n";
 				}
 			}
 		}
@@ -549,7 +566,6 @@ sub dimob_islands {
 			push @dimob_island_orfs, $island;
 		}
 	}
-	
 	return \@dimob_island_orfs;
 }
 
@@ -573,59 +589,43 @@ sub defline2gi {
 			next ORF unless($def_label);
 			##my ( $orf1, $orf2 ) = split '-ORF', $def_label;
 			my ($id1, $id2, $orf1, $contig_ORF1, $orf2, $contig_ORF2, $bias) = split ',', $def_label;
-			my ($orf_start, $orf_end, $pid, $contig, $annotation);
+			my ($orf_start, $orf_end, $pid, $coordinate, $contig, $annotation);
 
-			if ($contig_ORF1 ne $contig_ORF2) {
-				print "Different contigs...\n";
-				next;
-			}
-			
+			## just in case
+			if ($contig_ORF1 ne $contig_ORF2) { print "Different contigs...\n"; next; }
 			if ( $orf1 =~ /.*\|seq\:(.*)\:c{0,1}(\d+)\.\.(\d+).*/ ) {
 				$contig = $1;
 				$orf_start = $2;
 				$orf_end   = $3;
-
-				my $coordinate = "$orf_start..$orf_end";
+				$coordinate = "$orf_start..$orf_end"."_".$contig;
 			 	$pid = $ptt_table_hashref->{$coordinate}->{'PID'};
-			 	
-			 	$annotation = $ptt_table_hashref->{$coordinate}->{'Synonym'}.";".
-							 	$ptt_table_hashref->{$coordinate}->{'Gene'}.";".
-							 	$ptt_table_hashref->{$coordinate}->{'Product'};
-			 	
-			 	#print "####\n";
-			 	#print $orf1."\n";
-			 	#print $contig."\n";
-			 	#print $coordinate."\n";
-			 	#print $pid."\n";
-			 	#print "####\n";
-
-				if($extended_ids) {
-#				    print "Using extended\n";
-				    $pid .= "_$orf_start" . '..' . $orf_end;
-				}
-
-				unless(defined($pid)){
-				    #warn "Could not find pid";
-				}
-
 			}
 			#Morgan Hack: sometimes we don't need look up pid by coordinates
 			elsif($orf1 =~ /\((\d+)\)/ ){
                 $pid=$1;	
 			} else {
-
+			
 			}
 
 			#print "$orf_start and $orf_end\n";
-		
-			$orf_index->{'ORF_label'} = $pid;
+			unless(defined($coordinate)){
+			    #warn "Could not find pid";
+			}		
+			$orf_index->{'ORF_label'} = $coordinate;
 			$orf_index->{'start'}=$orf_start;
 			$orf_index->{'end'}=$orf_end;
 			$orf_index->{'seq'}=$contig;
-			$orf_index->{'annot'}=$annotation;
 			$orf_index->{'orf1'}=$orf1;
+			$orf_index->{'PID'}= $pid;
+			$orf_index->{'strand'}=$ptt_table_hashref->{$coordinate}->{'Strand'};
+		 	$annotation = $ptt_table_hashref->{$coordinate}->{'Synonym'}.";".
+				 	$ptt_table_hashref->{$coordinate}->{'Gene'}.";".
+				 	$ptt_table_hashref->{$coordinate}->{'Product'};
+
+			$orf_index->{'annot'}=$annotation;
 			
 			push @result_orfs, $orf_index;
+		
 		}
 		push @result_islands, [@result_orfs];
 	}
