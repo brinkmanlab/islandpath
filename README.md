@@ -5,22 +5,19 @@ IslandPath-DIMOB is a standalone software to predict genomic islands in bacteria
 Genomic islands (GIs) are clusters of genes in prokaryotic genomes of probable horizontal origin. 
 GIs are disproportionately associated with microbial adaptations of medical or environmental interest.
 
-The latest IslandPath-DIMOB version is integrated in [IslandViewer 4](http://www.pathogenomics.sfu.ca/islandviewer/browse/), the leading integrated web interface for genomic island prediction.
+This version here is a modification of the original version (https://github.com/brinkmanlab/islandpath) that allows IslandPath-DIMOB to process assembly draft genomes in multiple contigs and not using a reference genome.
 
 ## Install
 
-A pre-built Docker image is available in the [brinkmanlab docker hub](https://hub.docker.com/r/brinkmanlab/islandpath/). Using this pre-installed version of IslandPath-DIMOB ensures the software runs according to expectations.
+Although the original version has multiple instalation options: docker, github releases... for this particular version we would only rely on github clone. 
 
-Users wishing to install locally IslandPath-DIMOB can download a [release](http://github.com/brinkmanlab/islandpath/releases/) and install required perl libraries and HMMER listed below:
+Clone the latest code from github:
 
-Alternatively, you can also clone the latest code from github:
-
-    git clone https://github.com/brinkmanlab/islandpath
+    git clone https://github.com/JFsanchezherrero/islandpath
     
-Please note that IslandPath-DIMOB predictions should only take a couple of minutes per bacterial genome. It was recently reported that IslandPath-DIMOB was extremely slow on Mac OS X with a conda installation of perl libraries. While we investigate the reason for this issue, we recommend using the Docker image.
-    
-  
 **_Dependencies_**
+
+No additional dependencies were added to this new implementation. IslandPath-DIMOB remains with the same original dependencies. 
 
 1. Though IslandPath-DIMOB should work with any OS, it has only been tested with linux. 
 
@@ -42,14 +39,19 @@ HMMER can be obtained from http://hmmer.org/
 
 ## Run
 
-IslandPath-DIMOB v1.0.0 takes as input an annotated complete genome as a genbank (.gbk) or an embl (.embl) file.
+IslandPath-DIMOB v1.0.1_b takes as input an annotated complete/draft genome as a genbank (.gbk) or an embl (.embl) file.
 
-    # gbk file
-    ./Dimob.pl example/NC_003210.gbk NC_003210_GIs.txt
-    # embl file
-    ./Dimob.pl example/NC_000913.embl NC_000913_GIs.txt
+	perl Dimob.pl <genome.gbk> <output_name> [cutoff_dinuc_bias] [min_length]
 
+	Default values:
+		cutoff_dinuc_bias = 8
+		min_length = 8000
 
+	Example:
+		perl Dimob.pl example/NC_003210.gbk NC_003210_GIs
+		perl Dimob.pl example/NC_003210.gbk NC_003210_GIs 6 10000
+		perl Dimob.pl example/NC_000913.embl NC_000913_GIs 6 10000
+        
 ## Citation
 
 [Bertelli and Brinkman, 2018](https://doi.org/10.1093/bioinformatics/bty095)  
@@ -58,25 +60,31 @@ IslandPath-DIMOB v1.0.0 takes as input an annotated complete genome as a genbank
 
 ## Questions? Comments? Bugs?
 
-Email islandpick-mail@sfu.ca (contact person: Claire Bertelli) and we'd be happy to help.
-
-If you find a bug, please report it to islandpick-mail@sfu.ca along with the
-following information:
-
-* version of Perl (output of 'perl -V' is best)
-* version of IslandPath-DIMOB
-* operating system type and version
-* exact text of error message or description of problem
-
-If we don't have access to a system similar to yours, you may be asked to insert some debugging lines and report back on the results. The more help and information you can provide, the better!
+Email islandpick-mail@sfu.ca (contact person: Claire Bertelli) for the original version.
+Email jsanchez@igtp.cat (contact person: Jose F. Sanchez-Herrero) or via github issue for the modification version.
 
 
 ## Copyright and License
 
 IslandPath-DIMOB is distributed under the GNU General Public License. See also the LICENSE file included with this package.
 
+Give credit to the original version of this software available at https://github.com/brinkmanlab/islandpath
+
 
 ## Versions - New features
+
+### 27/06/2019 - IslandPath-DIMOB v1.0.1_b
+Several new implementations were performed in order to add multicontig functionality.
+
+We additionally fix some bugs and warning messages: 
+- Fix smartmacth experimental warning message
+- Fix dinuc bias loop iteration bug https://github.com/brinkmanlab/islandpath/issues/8#issue-459228372
+
+We increase the input and output options
+- Use GI min_length as a variable
+- Use cutoff_genes_dinuc as a variable
+- Output csv information for dinucleotide bias.
+- Provide additional information such as annotation of the genes within each GI
 
 ### 23/12/2016 - IslandPath-DIMOB v1.0.0  
 Increased recall and precision in the prediction of genomic islands based on the presence of dinucleotide bias and mobility genes. Standardization of input file types, and automatic generation of the other file types required by IslandPath-DIMOB.  
