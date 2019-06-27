@@ -50,7 +50,7 @@ sub extract_header {
 	my @headers;
 	my $string;
 	$. = 0;
-	open my $inputfilehandle, '<', $inputfilename or croak "Couldnot open $inputfilename";
+	open my $inputfilehandle, '<', $inputfilename or croak "Could not open $inputfilename";
 	do { chomp( $string = <$inputfilehandle> ) } until $. == $header_linenum || eof;
 	@headers = split /\t/, $string;
 	croak "header is empty\n" if ( ( scalar @headers ) == 0 );
@@ -177,9 +177,9 @@ sub table2hash_rowfirst {
 #convert the table to a hash based data structure using headers as the primary keys
 #and a user defined column as secondary keys
 #inputs: reference to an array of headers; column number starts at 1; input filehandle name
-	my @headers        = @{ shift @_ };
-	my $fd_name   = shift;
-	my @key_column_nums = @_;
+	my @headers        = @{ shift @_ }; ## header
+	my $fd_name   = shift; 				## file handle
+	my @key_column_nums = @_;			## columns
 	
 	for my $key (@key_column_nums) {
 	    unless ( $key >= 1 && $key <= scalar(@headers) ) {
@@ -187,6 +187,7 @@ sub table2hash_rowfirst {
 	    }
 	}
 	my @key_indexes = map { $_ - 1 } @key_column_nums;
+	
 	my %table_content;
 	while (<$fd_name>) {
 
@@ -196,13 +197,15 @@ sub table2hash_rowfirst {
         
         # Set limit to -1 so we get rows where the last column (product) is empty
 		my @content = split /\t/, $_, -1;
+		#my @content = split /\t/, $_;
 		#make sure that @content and @headers have the same number of elements
-		
 		croak "the number of header elements do not match the number of content elements, row: '$_'" if ( scalar(@headers) != scalar(@content) );
 		my $i = 0;
-#		my $key = $content[$key_index];
-		my $key = join('_', map { $content[$_] } @key_indexes);
+		#my $key = $content[$key_index];
+		#my $key = join('_', map { $content[$_] } @key_indexes);
+		my $key = $content[1]."_".$content[0];
 #		$key =~ s/\.\./-/g;
+
 		foreach my $field (@content) {
 			if ( exists $table_content{ $key }{ $headers[$i] } ) {
 				croak "Key: $key is not unique!";

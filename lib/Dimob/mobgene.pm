@@ -117,9 +117,8 @@ sub parse_ptt {
     my %mobgenes;
     my ( $header_arrayref, $pttfh ) = extract_headerandbodyfh( $ptt_file, $header_line );
     my $ptt_table_hashref = table2hash_rowfirst( $header_arrayref, $pttfh, @cols );
-    
     #print "here's the dumping\n";
-    #print Dumper $ptt_table_hashref;
+    #print Dumper $ptt_table_hashref;    
     foreach my $pid (keys %{$ptt_table_hashref} ) {
 		my $product = $ptt_table_hashref->{$pid}->{'Product'};
 		if (   $product =~ /transposase/i
