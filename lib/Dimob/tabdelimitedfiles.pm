@@ -175,37 +175,24 @@ sub table2hash_columnfirst {
 sub table2hash_rowfirst {
 
 #convert the table to a hash based data structure using headers as the primary keys
-#and a user defined column as secondary keys
 #inputs: reference to an array of headers; column number starts at 1; input filehandle name
+## no need to provide columns by the: always use coordinates and sequence id to standarize
+
 	my @headers        = @{ shift @_ }; ## header
 	my $fd_name   = shift; 				## file handle
-	my @key_column_nums = @_;			## columns
-	
-	for my $key (@key_column_nums) {
-	    unless ( $key >= 1 && $key <= scalar(@headers) ) {
-			croak "the column number used [$key] does not exist";
-	    }
-	}
-	my @key_indexes = map { $_ - 1 } @key_column_nums;
-	
 	my %table_content;
 	while (<$fd_name>) {
-
 		#ignore any blank lines
 		next if ( is_blank($_) );
 		chomp;
         
         # Set limit to -1 so we get rows where the last column (product) is empty
 		my @content = split /\t/, $_, -1;
-		#my @content = split /\t/, $_;
+
 		#make sure that @content and @headers have the same number of elements
 		croak "the number of header elements do not match the number of content elements, row: '$_'" if ( scalar(@headers) != scalar(@content) );
 		my $i = 0;
-		#my $key = $content[$key_index];
-		#my $key = join('_', map { $content[$_] } @key_indexes);
-		my $key = $content[1]."_".$content[0];
-#		$key =~ s/\.\./-/g;
-
+		my $key = $content[1]."_".$content[0]; ## key == start..end_sequence
 		foreach my $field (@content) {
 			if ( exists $table_content{ $key }{ $headers[$i] } ) {
 				croak "Key: $key is not unique!";

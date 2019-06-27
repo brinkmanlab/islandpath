@@ -342,30 +342,30 @@ sub cal_dinuc {
 		$biases[$index] = ( $bias / 16 );
 	}
 
-	print "ORFs dinucleotide analysis for $fasta_name\n";
+	##print "ORFs dinucleotide analysis for $fasta_name\n";
 	my $bias2;
 	my $count = 0;
 	my @results;
-	print OUTFILE "id1,id2,ORF1,contig_ORF1,ORF2,contig_ORF2,bias\n";
+	print OUTFILE "##id1,id2,ORF1,contig_ORF1,start_1,ORF2,contig_ORF2,start_2,bias\n";
 	foreach $bias2 (@biases) {
 		## $count++; ## if here, ORF_ids[0] is missing
 		my $tmp_bias2 = $bias2 * 1000;
 		my $tmp=$count+6;
 		my $orf1 = $ORF_ids[$count];
 		my $orf2 = $ORF_ids[$count+5];
-		my $seq1; my $seq2;
+		my $seq1; my $seq2; my $start_1; my $start_2;
 
 		## get contig id
-		if ( $orf1 =~ /\|seq\:(.*)\:.*/ ) { $seq1 = $1 }
-		if ( $orf2 =~ /\|seq\:(.*)\:.*/ ) { $seq2 = $1 }
+		if ( $orf1 =~ /.*\|(.*)\:c{0,1}(\d+)\.\.(\d+).*/ ) { $seq1 = $1; $start_1 = $2;}
+		if ( $orf2 =~ /.*\|(.*)\:c{0,1}(\d+)\.\.(\d+).*/ ) { $seq2 = $1; $start_2 = $2; }
 		
 		## skip if different contig ids
 		if ($seq1 ne $seq2) {  
 			$count++; ## fix missing $ORF_ids[0]
 			next; 
 		} 
-		my $key_string = $count.",".$tmp.",".$orf1.",".$seq1.",".$orf2.",".$seq2.",".$tmp_bias2; ## return csv instead
-		printf OUTFILE $key_string."\n";
+		my $key_string = $count.",".$tmp.",".$orf1.",".$seq1.",".$start_1.",".$orf2.",".$seq2.",".$start_2.",".$tmp_bias2; ## return csv instead
+		print OUTFILE $key_string."\n";
 		push (@results, { ORF_label => $key_string, DINUC_bias => $tmp_bias2 });
 		$count++; ## fix missing $ORF_ids[0]
 	}
@@ -581,25 +581,26 @@ sub defline2gi {
 	my @result_islands;
 	my ( $header_arrayref, $pttfh ) = extract_headerandbodyfh( $pttfilename, $header_line );
 	my $ptt_table_hashref = table2hash_rowfirst( $header_arrayref, $pttfh, 2); ## in column1 is the sequence
-
+	
 	foreach my $island (@$dinucislands) {
 		my @result_orfs;
 		ORF: foreach my $orf_index (@$island) {
 			my $def_label = $orf_index->{'ORF_label'};
 			next ORF unless($def_label);
 			##my ( $orf1, $orf2 ) = split '-ORF', $def_label;
-			my ($id1, $id2, $orf1, $contig_ORF1, $orf2, $contig_ORF2, $bias) = split ',', $def_label;
+			my ($id1, $id2, $orf1, $contig_ORF1, $start_1, $orf2, $contig_ORF2, $start_2, $bias) = split ',', $def_label;
 			my ($orf_start, $orf_end, $pid, $coordinate, $contig, $annotation);
 
 			## just in case
 			if ($contig_ORF1 ne $contig_ORF2) { print "Different contigs...\n"; next; }
-			if ( $orf1 =~ /.*\|seq\:(.*)\:c{0,1}(\d+)\.\.(\d+).*/ ) {
+			if ( $orf1 =~ /.*\|(.*)\:c{0,1}(\d+)\.\.(\d+).*/ ) {
 				$contig = $1;
 				$orf_start = $2;
 				$orf_end   = $3;
 				$coordinate = "$orf_start..$orf_end"."_".$contig;
 			 	$pid = $ptt_table_hashref->{$coordinate}->{'PID'};
 			}
+
 			#Morgan Hack: sometimes we don't need look up pid by coordinates
 			elsif($orf1 =~ /\((\d+)\)/ ){
                 $pid=$1;	

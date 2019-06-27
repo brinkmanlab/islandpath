@@ -224,9 +224,9 @@ sub run_dimob {
 
 	## print additional results for each GI
     $logger->info("Printing results");
-	my $out_gis_file = $out_put_name."_gi.csv";
+	my $out_gis_file = $out_put_name."_annot.csv";
     open (OUT, '>', $out_gis_file) or die "Cannot open out put file $!";
-	print OUT "GI_id,sequence,start,end,orf_name,annotation\n";
+	print OUT "##GI_id,sequence,start,end,strand,orf_name,annotation\n";
 
     ## print information and return
     my @gis;
@@ -238,14 +238,13 @@ sub run_dimob {
     		$logger->warn("Warning, GI is missing either start or end: ($_->[0]{start}, $_->[-1]{end})");
     		next;
     	}
-    	
     	## check if both in the same sequence
     	if ($_->[0]{seq} ne $_->[-1]{seq}) {
     		$logger->warn("Warning, GI has different sequence identifiers: ($_->[0]{seq}, $_->[-1]{seq})");
     		next;
     	}    	
     	## return information for the islands: start, end, sequence ID
-		push (@gis, [ $_->[0]{start}, $_->[-1]{end}, $_->[-1]{seq} ]);
+		push (@gis, [$_->[0]{seq}, $_->[0]{start}, $_->[-1]{end}, $_->[0]{strand}]);
 
 		## discard if smaller than expected
         my $diff = $_->[-1]{end} - $_->[0]{start};        
@@ -254,7 +253,7 @@ sub run_dimob {
 			## do not print
         } else {
 			for (my $i=0; $i < scalar @{ $_ }; $i++) {
-				my $string = "GI_".$isle.",".$_->[$i]{seq}.",".$_->[$i]{start}.",".$_->[$i]{end}.",".$_->[$i]{orf1}.",".$_->[$i]{annot};
+				my $string = "GI_".$isle.",".$_->[$i]{seq}.",".$_->[$i]{start}.",".$_->[$i]{end}.",".$_->[$i]{strand}.",".$_->[$i]{orf1}.",".$_->[$i]{annot};
 				### print into a file
 				print OUT $string."\n";
 			}

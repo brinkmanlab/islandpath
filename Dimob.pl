@@ -22,7 +22,7 @@
 
 =head1 LAST MAINTAINED
 
-    December 16th, 2016
+    January 16th, 2019
 
 =cut
 
@@ -158,25 +158,43 @@ MAIN: {
     $logger->info("Printing results");
 
     my $i = 1;
-    open my $fhgd, '>', $outputfile or die "Cannot open $outputfile: $!";
+    ## txt output
+    open OUT_TXT, '>', $outputfile or die "Cannot open $outputfile: $!";
+	print OUT_TXT "##GI\tseq\tstart\tend\tstrand\n";
+		
+	## gff output
+	my $gff_file = $outputfile.".gff3";
+	open GFF, '>', $gff_file or die "Cannot open $gff_file: $!";
+	print GFF "##gff-version 3\n";
+
+	## discarded regions
 	my $discard_file = $outputfile."_discard.txt";
 	open DISCARD, '>', $discard_file or die "Cannot open $discard_file: $!";
-	print DISCARD "seq\tstart\tend\tlength\n";
+	print DISCARD "##seq\tstart\tend\tlength\tstrand\n";
+
+	## loop through islands and print
     foreach my $island (@islands) {
-        my $start = $island->[0];
-        my $end = $island->[1];
-        my $seq = $island->[2];
+        my $seq = $island->[0];
+        my $start = $island->[1];
+        my $end = $island->[2];
+        my $strand = $island->[3];
         
         ## discard if smaller than min length set
         my $diff = $end - $start;        
         if ($diff < $min_length) {
-        	print DISCARD "$seq\t$start\t$end\t$diff\n";
+        	print DISCARD "$seq\t$start\t$end\t$diff\t$strand\n";
         } else {
-	        print $fhgd "GI_$i\t$seq\t$start\t$end\n";
+
+		    #$logger->info("Warning: txt output is now depreciated. Support has been added to output GFF3 formatted documents. Use (any) other extension to enable GFF output. See: https://github.com/brinkmanlab/islandpath/issues/7");
+	        print OUT_TXT "GI_$i\t$seq\t$start\t$end\t$strand\n";
+
+	        #TODO use proper chromosome sequence id
+	        print GFF "$seq\tislandpath\tgenomic_island\t$start\t$end\t.\t$strand\t.\tID=$seq\_gi$i\n";
 	        $i++;
         }
     }
-    close $fhgd;
+	## close filehandles
+    close (GFF); close (OUT_TXT); close (DISCARD);
 	
     $logger->info("Removing tmp files");
  	unless(unlink glob "$inputfile.*") {

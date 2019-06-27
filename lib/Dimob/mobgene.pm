@@ -112,11 +112,9 @@ sub parse_ptt {
     #are annotated as mobility genes
     my $ptt_file    = shift;
     my $header_line = 1;       #currently the 1st line of the multi sequence ptt file is the header
-    my @cols = qw(5); ## we add the sequence ID
-    if($self->{extended_ids}) { push @cols, 1; }
     my %mobgenes;
     my ( $header_arrayref, $pttfh ) = extract_headerandbodyfh( $ptt_file, $header_line );
-    my $ptt_table_hashref = table2hash_rowfirst( $header_arrayref, $pttfh, @cols );
+    my $ptt_table_hashref = table2hash_rowfirst( $header_arrayref, $pttfh);
     #print "here's the dumping\n";
     #print Dumper $ptt_table_hashref;    
     foreach my $pid (keys %{$ptt_table_hashref} ) {

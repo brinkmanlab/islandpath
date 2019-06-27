@@ -353,6 +353,8 @@ sub read_and_convert {
 		# open all files
 		
 		my $total_length = $seq->length();
+		my $seq_id = $seq->id;
+
 #		my $total_seq    = $seq->seq();
 
 		#print "ID: ".$seq->id."\n";
@@ -386,12 +388,18 @@ sub read_and_convert {
 		#print PTT_OUT join("\t", qw(Sequence Location Strand Length PID Gene Synonym Code COG Product)),"\n";
 
 		#Step through each protein
-		foreach my $feat (@cds) {
+		PROT: foreach my $feat (@cds) {
 			$count++;
 
 			#Get the general features
 			my $start  = $feat->start;
 			my $end    = $feat->end;
+
+			# Ignore joined spans that break the trunc() function
+			if ($start > $end) {
+			    next PROT;
+			}
+
 			my $strand = $feat->strand;
 			my $length = $feat->length;
 
@@ -420,8 +428,7 @@ sub read_and_convert {
 
 			my $strand_expand  = $strand >= 0 ? '+' : '-';
 			my $strand_expand2 = $strand >= 0 ? ''  : 'c';
-			my $desc = "seq:" . $seq->id ."\:$strand_expand2" . "$start..$end";
-
+			my $desc = "$seq_id\:$strand_expand2" . "$start..$end";
 			$desc = "ref\|$ref_accnum\|gi\|$gi\|" . $desc;
 
 			#Create the ffn seq
