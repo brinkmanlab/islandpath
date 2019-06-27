@@ -37,10 +37,9 @@ use strict;
 use warnings;
 use Moose;
 use Log::Log4perl qw(get_logger :nowarn);
-
 use Bio::SearchIO;
-
 use Dimob::tabdelimitedfiles;
+use Data::Dumper;
 
 my $cfg; my $logger; my $cfg_file;
 
@@ -64,7 +63,7 @@ sub BUILD {
 
 sub parse_hmmer {
     my $self = shift;
-    	my $hmmer_file         = shift;
+	my $hmmer_file = shift;
 	my $parse_evaluecutoff = shift;
 
 	my %domain_hash;
@@ -73,13 +72,12 @@ sub parse_hmmer {
 
     my $search_pattern = 'gi\|(\d+)\|';
     if($self->{extended_ids}) {
-	$search_pattern = 'gi\|(\d+)\|\:c?(\d+\.\.\d+)';
+		$search_pattern = 'gi\|(\d+)\|\:c?(\d+\.\.\d+)';
     }
 	#making sure that the file is present and not empty
 	if ( -s "$hmmer_file" ) {
 		#print "parse_hmmer: parsing HMMER results...\n";
-		my $in =
-		  Bio::SearchIO->new( -file => "$hmmer_file", -format => 'hmmer' );
+		my $in = Bio::SearchIO->new( -file => "$hmmer_file", -format => 'hmmer' );
 		while ( my $res = $in->next_result ) {
 			my %domains_evalues;
 			while ( my $hit = $res->next_hit ) {
@@ -113,38 +111,29 @@ sub parse_ptt {
     my $self = shift;
     #are annotated as mobility genes
     my $ptt_file    = shift;
-    my $header_line = 3;       #currently the 3rd line of ptt file is the header
-
-    my @cols = qw(4);
-    if($self->{extended_ids}) {
-	push @cols, 1;
-    }
+    my $header_line = 1;       #currently the 1st line of the multi sequence ptt file is the header
     my %mobgenes;
-    my ( $header_arrayref, $pttfh ) =
-	extract_headerandbodyfh( $ptt_file, $header_line );
-    my $ptt_table_hashref = table2hash_rowfirst( $header_arrayref, $pttfh, @cols );
+    my ( $header_arrayref, $pttfh ) = extract_headerandbodyfh( $ptt_file, $header_line );
+    my $ptt_table_hashref = table2hash_rowfirst( $header_arrayref, $pttfh);
     #print "here's the dumping\n";
-    #print Dumper $ptt_table_hashref;
+    #print Dumper $ptt_table_hashref;    
     foreach my $pid (keys %{$ptt_table_hashref} ) {
-	my $product = $ptt_table_hashref->{$pid}->{'Product'};
-	if (   $product =~ /transposase/i
-	       || $product =~ /IstB/i
-	       || $product =~ /insertion element/i
-	       || $product =~ /recombinase/i
-	       || $product =~ /insertion sequence/i
-	       || $product =~ /resolvase/i
-	       || $product =~ /integrase/i
-	       || $product =~ /phage/i
-	       || $product =~ /transposon/i
-	       || $product =~ /transposable element/i
-		   || $product =~ /excisionase/i
-	       )
-	{
-	    $mobgenes{$pid} = $product;
-	}
+		my $product = $ptt_table_hashref->{$pid}->{'Product'};
+		if (   $product =~ /transposase/i
+			   || $product =~ /IstB/i
+			   || $product =~ /insertion element/i
+			   || $product =~ /recombinase/i
+			   || $product =~ /insertion sequence/i
+			   || $product =~ /resolvase/i
+			   || $product =~ /integrase/i
+			   || $product =~ /phage/i
+			   || $product =~ /transposon/i
+			   || $product =~ /transposable element/i
+			   || $product =~ /excisionase/i
+			   )
+		{ $mobgenes{$pid} = $product; }
     }
     return \%mobgenes;
-
 }
 
 1;

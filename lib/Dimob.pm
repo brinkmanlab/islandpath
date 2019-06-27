@@ -17,17 +17,21 @@
     
 =head1 AUTHORS
 
-	Claire Bertelli
+	Claire Bertelli [Original author]
 	Email: claire.bertelli@sfu.ca
-    and
-    Matthew Laird
-    Email: lairdm@sfu.ca
     Brinkman Laboratory
     Simon Fraser University
+    
+   	Jose F. Sanchez-Herrero [Developer of this fork]
+	Email: jsanchez@igtp.cat
+	Bioinformatics Facility Unit, Institut German Trias i Pujol (IGTP) 
+	Badalona, Barcelona, Spain	
+
 
 =head1 LAST MAINTAINED
 
-    Oct 24, 2016
+    June 27th, 2019
+
 
 =cut
 
@@ -68,11 +72,10 @@ sub BUILD {
     $self->log_rotate();
     $logger->trace("IslandPath-DIMOB initialized");
 
-    die "Error, work dir not specified:  $args->{workdir}"
-			unless( -d $args->{workdir} );
+	die "Error, work dir not specified:  $args->{workdir}" unless( -d $args->{workdir} );
     $self->{workdir} = $args->{workdir};
-
-    $self->{MIN_GI_SIZE} = $args->{MIN_GI_SIZE};
+	
+    $self->{MIN_GI_SIZE} = $args->{MIN_GI_SIZE}; ## set as a variable
 
     # Do we need to use extended ids because
     # there could be duplicate gis. All the files 
@@ -94,9 +97,9 @@ sub run {
 
     my @islands = $self->run_dimob($filename);
 
-    print Dumper \@islands;
+    ##print Dumper \@islands;
 
-### TO REMOVE
+	### TO REMOVE
     if(@islands) {
 			# If we get a undef set it doesn't mean failure, just
 			# nothing found.  Write the results to the callback
@@ -105,7 +108,7 @@ sub run {
 					$callback->record_islands($module_name, @islands);
 			}
     }
-### TO REMOVE
+	### TO REMOVE
 
 
     # We just return 1 because any failure for this module
@@ -117,6 +120,8 @@ sub run {
 sub run_dimob {
     my $self = shift;
     my $filename = shift;
+    my $out_put_name = shift;
+    my $cutoff_island = shift;
     my @tmpfiles;
 
     # We're given the filename, look up the files
@@ -180,6 +185,7 @@ sub run_dimob {
     foreach(keys %$mobgenes){
     	$mob_list->{$_}=1;   
     }
+    #print Dumper $mob_list;
 
     #get a list of mobility genes from ptt file based on keyword match
     $logger->debug("Retrieving mobility genes from ptt file");
@@ -187,12 +193,15 @@ sub run_dimob {
 
     foreach(keys %$mobgene_ptt){
     	$mob_list->{$_}=1;   
-    }
+    }    
+    #print Dumper $mob_list;
 
     #calculate the dinuc bias for each gene cluster of 6 genes
     #input is a fasta file of ORF nucleotide sequences
     $logger->debug("Calculating dinucleotide bias");
-    my $dinuc_results = cal_dinuc("$filename.ffn");
+    my $out_bias = $out_put_name.".dinuc_bias.csv";
+    my $dinuc_results = cal_dinuc("$filename.ffn", $out_bias);
+    $logger->debug("Information printed in file: ".$out_bias);
     my @dinuc_values;
     foreach my $val (@$dinuc_results) {
     	push @dinuc_values, $val->{'DINUC_bias'};
@@ -203,32 +212,62 @@ sub run_dimob {
     my $sd   = cal_stddev( \@dinuc_values );
 
     #generate a list of dinuc islands with ffn fasta file def line as the hash key
-    my $gi_orfs = dinuc_islands( $dinuc_results, $median, $sd, 8 );
+    my $gi_orfs = dinuc_islands( $dinuc_results, $median, $sd, $cutoff_island);
 
     #convert the def line to gi numbers (the data structure is maintained)
     my $extended = $self->{extended_ids} ? 1 : undef;
     my $dinuc_islands = defline2gi( $gi_orfs, "$filename.ptt", $extended );
 
-    #check the dinuc islands against the mobility gene list
-    #any dinuc islands containing >=1 mobility gene are classified as
-    #dimob islands
+	#check the dinuc islands against the mobility gene list
+    #any dinuc islands containing >=1 mobility gene are classified as dimob islands
     $logger->debug("Looking for regions with dinuc bias and mobility genes");
     my $dimob_islands = dimob_islands( $dinuc_islands, $mob_list );
+    
+    #print Dumper $dinuc_islands;
+    #print Dumper $mob_list;
 
+	## print additional results for each GI
+    $logger->info("Printing results");
+	my $out_gis_file = $out_put_name."_annot.csv";
+    open (OUT, '>', $out_gis_file) or die "Cannot open out put file $!";
+	print OUT "##GI_id,sequence,start,end,strand,orf_name,annotation\n";
+
+    ## print information and return
     my @gis;
-    foreach (@$dimob_islands) {
+    my $isle=1;
 
-    	#get the pids from the  for just the start and end genes
+    foreach (@$dimob_islands) {
+    	## check if start and ends exist
     	unless($_->[0]{start} && $_->[-1]{end}) {
     		$logger->warn("Warning, GI is missing either start or end: ($_->[0]{start}, $_->[-1]{end})");
     		next;
     	}
+    	## check if both in the same sequence
+    	if ($_->[0]{seq} ne $_->[-1]{seq}) {
+    		$logger->warn("Warning, GI has different sequence identifiers: ($_->[0]{seq}, $_->[-1]{seq})");
+    		next;
+    	}    	
+    	## return information for the islands: start, end, sequence ID
+		push (@gis, [$_->[0]{seq}, $_->[0]{start}, $_->[-1]{end}, $_->[0]{strand}]);
 
-			push (@gis, [ $_->[0]{start}, $_->[-1]{end}]);
+		## discard if smaller than expected
+        my $diff = $_->[-1]{end} - $_->[0]{start};        
+        my $min_length = $self->{MIN_GI_SIZE};
+        if ($diff <= $min_length) {
+			## do not print
+        } else {
+			for (my $i=0; $i < scalar @{ $_ }; $i++) {
+				my $string = "GI_".$isle.",".$_->[$i]{seq}.",".$_->[$i]{start}.",".$_->[$i]{end}.",".$_->[$i]{strand}.",".$_->[$i]{orf1}.",".$_->[$i]{annot};
+				### print into a file
+				print OUT $string."\n";
+			}
 			#my $start = $_->[0]{start};
 			#my $end = $_->[-1]{end};		 
 			#print "$start\t$end\n";    
+			$isle++;
+        }
     }
+	close (OUT);
 		
     # And cleanup after ourself
     $logger->debug("Cleaning temporary files");
