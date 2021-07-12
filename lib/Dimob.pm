@@ -224,7 +224,7 @@ sub run_dimob {
     		next;
     	}
 
-			push (@gis, [ $_->[0]{start}, $_->[-1]{end}]);
+			push (@gis, [ $_->[0]{seq_id}, $_->[0]{start}, $_->[-1]{end}, $_->[0]{strand}]);
 			#my $start = $_->[0]{start};
 			#my $end = $_->[-1]{end};		 
 			#print "$start\t$end\n";    

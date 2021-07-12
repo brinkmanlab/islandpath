@@ -22,7 +22,7 @@
 
 =head1 LAST MAINTAINED
 
-    December 16th, 2016
+    January 16th, 2019
 
 =cut
 
@@ -138,12 +138,30 @@ MAIN: {
 
     my $i = 1;
     open my $fhgd, '>', $outputfile or die "Cannot open output.txt: $!";
-    foreach my $island (@islands) {
-        my $start = $island->[0];
-        my $end = $island->[1];
-        print $fhgd "GI_$i\t$start\t$end\n";
-        $i++;
+
+    if ($outputfile =~ /\.txt$/) {
+        #legacy output
+        $logger->info("Warning: txt output is now depreciated. Support has been added to output GFF3 formatted documents. Use (any) other extension to enable GFF output. See: https://github.com/brinkmanlab/islandpath/issues/7");
+        foreach my $island (@islands) {
+            my $start = $island->[1];
+            my $end = $island->[2];
+            print $fhgd "GI_$i\t$start\t$end\n";
+            $i++;
+        }
+    } else {
+        #GFF output
+        print $fhgd "##gff-version 3\n";
+        foreach my $island (@islands) {
+            my $label = $island->[0];
+            my $start = $island->[1];
+            my $end = $island->[2];
+            my $strand = $island->[3];
+            #TODO use proper chromosome sequence id
+            print $fhgd "$label\tislandpath\tgenomic_island\t$start\t$end\t.\t$strand\t.\tID=$label\_gi$i\n";
+            $i++;
+        }
     }
+
     close $fhgd;
 
     $logger->info("Removing tmp files");

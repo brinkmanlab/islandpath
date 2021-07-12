@@ -546,10 +546,15 @@ sub defline2gi {
 			my $orf_start;
 			my $orf_end;
 			my $pid;
+			my $seq_id;
+			my $strand = '.';
 #			print "$orf1\n";
-			if ( $orf1 =~ /\|:(\d+)\.\.(\d+)\)/ ) {
-				$orf_start = $1;
-				$orf_end   = $2;
+
+			if ( $orf1 =~ /.*\|([^:]*):(\d+)\.\.(\d+)\)/ ) {
+				$seq_id = $1;
+				$strand = '+';
+				$orf_start = $2;
+				$orf_end   = $3;
 				my $coordinate = "$orf_start..$orf_end";
 			 	$pid = $ptt_table_hashref->{$coordinate}->{'PID'};
 				if($extended_ids) {
@@ -559,9 +564,11 @@ sub defline2gi {
 				unless(defined($pid)){
 				    #warn "Could not find pid";
 				}
-			}elsif ( $orf1 =~ /\|:c(\d+)\.\.(\d+)\)/ ) {
-				$orf_start = $1;
-				$orf_end   = $2;
+			}elsif ( $orf1 =~ /.*\|([^:]*):c(\d+)\.\.(\d+)\)/ ) {
+				$seq_id = $1;
+				$strand = '-';
+				$orf_start = $2;
+				$orf_end   = $3;
 				my $coordinate = "$orf_start..$orf_end";
 				$pid = $ptt_table_hashref->{$coordinate}->{'PID'};
 				if($extended_ids) {
@@ -582,6 +589,8 @@ sub defline2gi {
 			#print "$orf_start and $orf_end\n";
 		
 			$orf_index->{'ORF_label'} = $pid;
+			$orf_index->{'seq_id'} = $seq_id;
+			$orf_index->{'strand'} = $strand;
 			$orf_index->{'start'}=$orf_start;
 			$orf_index->{'end'}=$orf_end;
 			push @result_orfs, $orf_index;
