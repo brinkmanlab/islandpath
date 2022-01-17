@@ -9,7 +9,7 @@ The latest IslandPath-DIMOB version is integrated in [IslandViewer 4](http://www
 
 ## Install
 
-A pre-built Docker image is available in the [brinkmanlab docker hub](https://hub.docker.com/r/brinkmanlab/islandpath/). Using this pre-installed version of IslandPath-DIMOB ensures the software runs according to expectations.
+A pre-built Docker image is provided by the [BioContainers project](https://biocontainers.pro/tools/islandpath). Using this pre-installed version of IslandPath-DIMOB ensures the software runs according to expectations.
 
 Users wishing to install locally IslandPath-DIMOB can download a [release](http://github.com/brinkmanlab/islandpath/releases/) and install required perl libraries and HMMER listed below:
 
