@@ -38,7 +38,7 @@ The latest version of Perl can be obtained from http://www.cpan.org
 4. A working installation of HMMER3  
 HMMER can be obtained from http://hmmer.org/  
 "hmmscan" must be within your executable path.
-
+.
 
 ## Run
 
