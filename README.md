@@ -16,9 +16,6 @@ A pre-built Docker image is provided by the [BioContainers project](https://quay
     # Run islandpath via container
     docker run --rm -u $(id -u):$(id -g) -v "$PWD":/data -w /data quay.io/biocontainers/islandpath:1.0.6--hdfd78af_0 islandpath NZ_CP025328.1.gbk my_genome_GIs.txt
     
-
-Users wishing to install locally IslandPath-DIMOB can download a [release](http://github.com/brinkmanlab/islandpath/releases/) and install required perl libraries and HMMER listed below:
-
 ## Install and run locally 
 
 Alternatively, you can also clone the latest code from github:
@@ -26,7 +23,8 @@ Alternatively, you can also clone the latest code from github:
     git clone https://github.com/brinkmanlab/islandpath
     
 Please note that IslandPath-DIMOB predictions should only take a couple of minutes per bacterial genome. It was recently reported that IslandPath-DIMOB was extremely slow on Mac OS X with a conda installation of perl libraries. We recommend using the Docker image.
-    
+
+Users wishing to install locally IslandPath-DIMOB can download a [release](http://github.com/brinkmanlab/islandpath/releases/) and install required perl libraries and HMMER listed below:
   
 **_Dependencies_**
 
