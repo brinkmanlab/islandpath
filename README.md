@@ -14,7 +14,7 @@ A pre-built Docker image is provided by the [BioContainers project](https://quay
     # Pull most recent release
     docker pull quay.io/biocontainers/islandpath:1.0.6--hdfd78af_0
     # Run islandpath via container
-    docker run --rm -u $(id -u):$(id -g) -v "$PWD":/data -w /data quay.io/biocontainers/islandpath:1.0.6--hdfd78af_0 islandpath NZ_CP025328.1.gbk my_genome_GIs.txt
+    docker run --rm -u $(id -u):$(id -g) -v "$PWD":/data -w /data quay.io/biocontainers/islandpath:1.0.6--hdfd78af_0 islandpath genbank_file.gbk my_genome_GIs.txt
     
 ## Install and run locally 
 
