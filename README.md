@@ -11,9 +11,9 @@ The latest IslandPath-DIMOB version is integrated in [IslandViewer 4](http://www
 
 A pre-built Docker image is provided by the [BioContainers project](https://quay.io/repository/biocontainers/islandpath). Using this pre-installed version of IslandPath-DIMOB ensures the software runs according to expectations.
 
-    # Most recent release
+    # Pull most recent release
     docker pull quay.io/biocontainers/islandpath:1.0.6--hdfd78af_0
-
+    # Run islandpath via container
     docker run --rm -u $(id -u):$(id -g) -v "$PWD":/data -w /data quay.io/biocontainers/islandpath:1.0.6--hdfd78af_0 islandpath NZ_CP025328.1.gbk my_genome_GIs.txt
     
 
