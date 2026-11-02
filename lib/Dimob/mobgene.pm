@@ -73,7 +73,7 @@ sub parse_hmmer {
 
     my $search_pattern = 'gi\|(\d+)\|';
     if($self->{extended_ids}) {
-	$search_pattern = 'gi\|(\d+)\|\:c?(\d+\.\.\d+)';
+	$search_pattern = 'gi\|(\d+)\|[^:]*\:c?(\d+\.\.\d+)';
     }
 	#making sure that the file is present and not empty
 	if ( -s "$hmmer_file" ) {
