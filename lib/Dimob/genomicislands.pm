@@ -391,7 +391,9 @@ sub dinuc_islands {
 	my $sd               = shift @_;
 	my $cutoff           = shift @_ || 8;    #default is 8
 	my @dinuc;    #index of array elements with dinuc bias
-	push @dinuc, 0;
+	# Sentinel below every gene index; with 0, gene 0 could never be added
+	# because indices are only appended when greater than the last one.
+	push @dinuc, -1;
 
 	#in this round, keep track all ORFs that have dinuc bias
 	#regardless the cutoff, we'll eliminate the fragments smaller
@@ -431,7 +433,7 @@ sub dinuc_islands {
 		}
 		$i++;
 	}
-	shift @dinuc;    #remove the initial zero at the beginning of the array
+	shift @dinuc;    #remove the sentinel at the beginning of the array
 
 	#here, we will only keep clusters of dinuc biased ORFs greater than the size cutoff
 	my @temp;
