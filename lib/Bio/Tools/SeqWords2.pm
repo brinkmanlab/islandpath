@@ -214,8 +214,14 @@ sub count_words
 
     # now the real business
     # JS - remove DNA assumption
-    while($seqstring =~ /([ATCG]{$word_length})/gim) {
-	$codon{uc($1)}++;
+    # Count non-overlapping words in a fixed frame and skip words containing
+    # anything but A, C, G or T. A global regex match restarts after a
+    # non-ACGT character, which shifts the frame: words after it would come
+    # from the other frame and be double-counted or missed by the caller,
+    # which counts both frames.
+    for (my $i = 0; $i + $word_length <= length($seqstring); $i += $word_length) {
+	my $word = substr($seqstring, $i, $word_length);
+	$codon{$word}++ if $word =~ /^[ACGT]+$/;
     }
     return \%codon;
 
