@@ -350,12 +350,13 @@ sub cal_dinuc {
 		print OUTFILE "ORFs_dinucleotide_analysis_for $fasta_name\n";
 		my $bias2;
 		my $count = 0;
+		# Window $count (0-based) covers ORFs $count .. $count+5
 		foreach $bias2 (@biases) {
-			$count++;
 			$bias2 = $bias2 * 1000;
 			printf OUTFILE
 			  "ORF%5d-ORF%5d($ORF_ids[$count]-$ORF_ids[$count+5])=%5.2f\n",
-			  $count, ( $count + 5 ), $bias2;
+			  $count + 1, ( $count + 6 ), $bias2;
+			$count++;
 		}
 		close OUTFILE;
 		return;
@@ -366,15 +367,23 @@ sub cal_dinuc {
 		my $range = 5;
 		my @results;
 		my $key_string;
+		# Window $count (0-based) covers ORFs $count .. $count+$range and is
+		# labelled with its first ORF, so that dinuc_islands can map a gene
+		# index to that gene. ORF_ids lists the window's ORFs, so genes past
+		# the last window start can be resolved too.
 		foreach $bias2 (@biases) {
-			$count++;
 			$bias2      = $bias2 * 1000;
 			$key_string =
-			    "ORF" . $count . "("
+			    "ORF" . ( $count + 1 ) . "("
 			  . $ORF_ids[$count] . ")-ORF"
-			  . ( $count + $range ) . "("
+			  . ( $count + $range + 1 ) . "("
 			  . $ORF_ids[ $count + $range ] . ")";
-			push @results, { ORF_label => $key_string, DINUC_bias => $bias2 };
+			push @results, {
+				ORF_label  => $key_string,
+				DINUC_bias => $bias2,
+				ORF_ids    => [ @ORF_ids[ $count .. $count + $range ] ],
+			};
+			$count++;
 		}
 		return \@results;
 	}
@@ -470,17 +479,31 @@ sub dinuc_islands {
 		}
 	}
 
+	# Gene index $k is window $k's first ORF. The last window covers the last
+	# six genes, so genes after its start get a record built from its ORF list
+	# instead of indexing past the end of the window array.
+	my $gene_record = sub {
+		my $k = shift;
+		my $nwin = scalar(@$ORFs_dinuc_array);
+		return $ORFs_dinuc_array->[$k] if $k < $nwin;
+		my $last = $ORFs_dinuc_array->[-1];
+		my $id = $last->{'ORF_ids'}[ $k - ( $nwin - 1 ) ];
+		return undef unless defined $id;
+		return { ORF_label => "ORF" . ( $k + 1 ) . "($id)-ORF" . ( $k + 1 ) . "($id)",
+				 DINUC_bias => undef };
+	};
+
 	# We will merge regions of dinuc_abovecut that are less than 5 genes apart
 	# We do not export the last gene of each dinuc_abovecut as adding the last gene significantly
 	# diminishes precision more than it increases recall.
 	for ( my $i = 0 ; $i < (scalar(@dinuc_abovecut)-1) ; $i++ ) {
 		if ( ( $dinuc_abovecut[$i] + 1) == ( $dinuc_abovecut[ $i + 1 ] ) ) {
-			push @{ $islands[$island_index] }, $ORFs_dinuc_array->[ $dinuc_abovecut[$i]];
+			push @{ $islands[$island_index] }, $gene_record->( $dinuc_abovecut[$i] );
 		}
 		elsif ( ( $dinuc_abovecut[$i] + 6) >= ( $dinuc_abovecut[ $i + 1 ] ) ) {
 			my $dif = $dinuc_abovecut[ $i + 1 ]-$dinuc_abovecut[$i]-1;
 			for (my $j = 0; $j <= $dif; $j++ ) {
-				push @{ $islands[$island_index] }, $ORFs_dinuc_array->[ $dinuc_abovecut[$i]+$j];
+				push @{ $islands[$island_index] }, $gene_record->( $dinuc_abovecut[$i]+$j );
 			}
 		}
 		#elsif (( $dinuc_abovecut[$i] ) == ( $dinuc_abovecut[ $i - 1 ]+1 ) ) {
